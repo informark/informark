@@ -1,0 +1,11 @@
+node_modules/
+.wwebjs_auth/
+.wwebjs_cache/
+*.log
+enviados.json
+jbl_ultimo.json
+novos_ultimo.json
+ultimo_relatorio.txt
+precos.csv
+promocoes_enviadas.csv
+relatorio_menor_preco_*.csv
