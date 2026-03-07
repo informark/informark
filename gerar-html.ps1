@@ -32,7 +32,8 @@ function Nova-TabelaHtml {
         foreach ($col in $colunas) {
             $valor = $linha.$col
             if ($null -eq $valor) { $valor = "" }
-            $tbody += "<td>$valor</td>`n"
+            $valorEscapado = [System.Net.WebUtility]::HtmlEncode([string]$valor)
+            $tbody += "<td>$valorEscapado</td>`n"
         }
         $tbody += "</tr>`n"
     }
@@ -87,7 +88,7 @@ $html = @"
             color: #111827;
         }
         .container {
-            max-width: 1300px;
+            max-width: 1320px;
             margin: 0 auto;
         }
         .card {
@@ -130,14 +131,25 @@ $html = @"
         .tab-content.active {
             display: block;
         }
-        input {
+        .subtitulo {
+            margin-top: 10px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .filtros {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        input, select {
             width: 100%;
             padding: 12px;
-            font-size: 16px;
+            font-size: 15px;
             border: 1px solid #d1d5db;
             border-radius: 10px;
             box-sizing: border-box;
-            margin: 15px 0;
+            background: white;
         }
         .table-wrap {
             overflow-x: auto;
@@ -163,10 +175,16 @@ $html = @"
         tr:hover td {
             background: #f9fafb;
         }
-        .subtitulo {
-            margin-top: 10px;
-            margin-bottom: 8px;
-            font-weight: bold;
+        .resumo {
+            font-size: 14px;
+            color: #4b5563;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 900px) {
+            .filtros {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -183,13 +201,41 @@ $html = @"
 
             <div id="abaRelatorio" class="tab-content active">
                 <div class="subtitulo">Arquivo base: $nomeArquivoRelatorio</div>
-                <input type="text" id="buscaRelatorio" placeholder="Buscar no relat&oacute;rio de menor pre&ccedil;o...">
+
+                <div class="filtros">
+                    <input type="text" id="buscaRelatorio" placeholder="Buscar no relat&oacute;rio...">
+                    <select id="modeloRelatorio">
+                        <option value="">Todos os modelos</option>
+                    </select>
+                    <select id="gbRelatorio">
+                        <option value="">Todos os GB</option>
+                    </select>
+                    <select id="condicaoRelatorio">
+                        <option value="">Todas as condi&ccedil;&otilde;es</option>
+                    </select>
+                </div>
+
+                <div class="resumo" id="resumoRelatorio"></div>
                 $tabelaRelatorio
             </div>
 
             <div id="abaPrecos" class="tab-content">
                 <div class="subtitulo">Arquivo base: $nomeArquivoPrecos</div>
-                <input type="text" id="buscaPrecos" placeholder="Buscar na planilha de pre&ccedil;os...">
+
+                <div class="filtros">
+                    <input type="text" id="buscaPrecos" placeholder="Buscar na planilha de pre&ccedil;os...">
+                    <select id="modeloPrecos">
+                        <option value="">Todos os modelos</option>
+                    </select>
+                    <select id="gbPrecos">
+                        <option value="">Todos os GB</option>
+                    </select>
+                    <select id="condicaoPrecos">
+                        <option value="">Todas as condi&ccedil;&otilde;es</option>
+                    </select>
+                </div>
+
+                <div class="resumo" id="resumoPrecos"></div>
                 $tabelaPrecos
             </div>
         </div>
@@ -209,24 +255,146 @@ $html = @"
             botao.classList.add('active');
         }
 
-        function ativarBusca(inputId, tabelaId) {
-            const busca = document.getElementById(inputId);
-            const linhas = document.querySelectorAll('#' + tabelaId + ' tbody tr');
+        function detectarIndices(tabelaId) {
+            const ths = Array.from(document.querySelectorAll('#' + tabelaId + ' thead th')).map(th => th.innerText.trim().toLowerCase());
 
-            if (!busca) return;
+            function acharIndice(palavras) {
+                for (let i = 0; i < ths.length; i++) {
+                    const nome = ths[i];
+                    for (const p of palavras) {
+                        if (nome.includes(p)) return i;
+                    }
+                }
+                return -1;
+            }
 
-            busca.addEventListener('input', function () {
-                const termo = this.value.toLowerCase();
+            return {
+                modelo: acharIndice(['modelo', 'produto', 'aparelho', 'iphone']),
+                gb: acharIndice(['gb', 'armazenamento', 'memoria', 'memória', 'capacidade']),
+                condicao: acharIndice(['condicao', 'condição', 'estado'])
+            };
+        }
 
-                linhas.forEach(function(linha) {
-                    const texto = linha.innerText.toLowerCase();
-                    linha.style.display = texto.includes(termo) ? '' : 'none';
+        function preencherSelectComValores(selectId, valores) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            const valorAtual = select.value;
+            const primeiroOption = select.options[0].outerHTML;
+
+            select.innerHTML = primeiroOption;
+
+            valores
+                .filter(v => v && v.trim() !== '')
+                .sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' }))
+                .forEach(valor => {
+                    const option = document.createElement('option');
+                    option.value = valor;
+                    option.textContent = valor;
+                    select.appendChild(option);
                 });
+
+            select.value = valorAtual;
+        }
+
+        function configurarFiltros(config) {
+            const tabela = document.getElementById(config.tabelaId);
+            if (!tabela) return;
+
+            const busca = document.getElementById(config.buscaId);
+            const modeloSelect = document.getElementById(config.modeloId);
+            const gbSelect = document.getElementById(config.gbId);
+            const condicaoSelect = document.getElementById(config.condicaoId);
+            const resumo = document.getElementById(config.resumoId);
+
+            const indices = detectarIndices(config.tabelaId);
+
+            function obterLinhas() {
+                return Array.from(document.querySelectorAll('#' + config.tabelaId + ' tbody tr'));
+            }
+
+            function popularFiltros() {
+                const linhas = obterLinhas();
+
+                const modelos = new Set();
+                const gbs = new Set();
+                const condicoes = new Set();
+
+                linhas.forEach(linha => {
+                    const tds = linha.querySelectorAll('td');
+
+                    if (indices.modelo >= 0 && tds[indices.modelo]) modelos.add(tds[indices.modelo].innerText.trim());
+                    if (indices.gb >= 0 && tds[indices.gb]) gbs.add(tds[indices.gb].innerText.trim());
+                    if (indices.condicao >= 0 && tds[indices.condicao]) condicoes.add(tds[indices.condicao].innerText.trim());
+                });
+
+                preencherSelectComValores(config.modeloId, Array.from(modelos));
+                preencherSelectComValores(config.gbId, Array.from(gbs));
+                preencherSelectComValores(config.condicaoId, Array.from(condicoes));
+            }
+
+            function aplicarFiltros() {
+                const linhas = obterLinhas();
+
+                const termo = (busca?.value || '').toLowerCase().trim();
+                const modelo = (modeloSelect?.value || '').toLowerCase().trim();
+                const gb = (gbSelect?.value || '').toLowerCase().trim();
+                const condicao = (condicaoSelect?.value || '').toLowerCase().trim();
+
+                let visiveis = 0;
+
+                linhas.forEach(linha => {
+                    const tds = linha.querySelectorAll('td');
+                    const texto = linha.innerText.toLowerCase();
+
+                    const valorModelo = (indices.modelo >= 0 && tds[indices.modelo]) ? tds[indices.modelo].innerText.toLowerCase().trim() : '';
+                    const valorGb = (indices.gb >= 0 && tds[indices.gb]) ? tds[indices.gb].innerText.toLowerCase().trim() : '';
+                    const valorCondicao = (indices.condicao >= 0 && tds[indices.condicao]) ? tds[indices.condicao].innerText.toLowerCase().trim() : '';
+
+                    const okBusca = !termo || texto.includes(termo);
+                    const okModelo = !modelo || valorModelo === modelo;
+                    const okGb = !gb || valorGb === gb;
+                    const okCondicao = !condicao || valorCondicao === condicao;
+
+                    const mostrar = okBusca && okModelo && okGb && okCondicao;
+                    linha.style.display = mostrar ? '' : 'none';
+
+                    if (mostrar) visiveis++;
+                });
+
+                if (resumo) {
+                    resumo.textContent = visiveis + ' registro(s) encontrado(s)';
+                }
+            }
+
+            popularFiltros();
+            aplicarFiltros();
+
+            [busca, modeloSelect, gbSelect, condicaoSelect].forEach(el => {
+                if (el) {
+                    el.addEventListener('input', aplicarFiltros);
+                    el.addEventListener('change', aplicarFiltros);
+                }
             });
         }
 
-        ativarBusca('buscaRelatorio', 'tabelaRelatorio');
-        ativarBusca('buscaPrecos', 'tabelaPrecos');
+        configurarFiltros({
+            tabelaId: 'tabelaRelatorio',
+            buscaId: 'buscaRelatorio',
+            modeloId: 'modeloRelatorio',
+            gbId: 'gbRelatorio',
+            condicaoId: 'condicaoRelatorio',
+            resumoId: 'resumoRelatorio'
+        });
+
+        configurarFiltros({
+            tabelaId: 'tabelaPrecos',
+            buscaId: 'buscaPrecos',
+            modeloId: 'modeloPrecos',
+            gbId: 'gbPrecos',
+            condicaoId: 'condicaoPrecos',
+            resumoId: 'resumoPrecos'
+        });
     </script>
 </body>
 </html>
@@ -235,4 +403,4 @@ $html = @"
 $destino = Join-Path $docs "index.html"
 [System.IO.File]::WriteAllText($destino, $html, [System.Text.UTF8Encoding]::new($false))
 
-Write-Host "HTML gerado em docs\index.html com duas abas"
+Write-Host "HTML gerado em docs\index.html com filtros"
