@@ -79,8 +79,12 @@ $html = @"
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relat&oacute;rio Informark</title>
+    <title>Informark Dashboard</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
             background: #f3f4f6;
@@ -90,31 +94,73 @@ $html = @"
         }
 
         .container {
-            max-width: 1320px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
-        .card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 20px;
+        .hero {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            border-radius: 22px;
+            padding: 28px;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+        }
+
+        .hero h1 {
+            margin: 0 0 8px 0;
+            font-size: 34px;
+        }
+
+        .hero p {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 15px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
-        h1 {
-            margin-top: 0;
-            margin-bottom: 10px;
+        .stat-label {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .main-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
         .meta {
             color: #6b7280;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            font-size: 14px;
         }
 
         .tabs {
             display: flex;
             gap: 10px;
-            margin: 20px 0 15px 0;
+            margin: 20px 0 16px 0;
             flex-wrap: wrap;
         }
 
@@ -122,15 +168,15 @@ $html = @"
             border: none;
             background: #e5e7eb;
             color: #111827;
-            padding: 10px 16px;
-            border-radius: 10px;
+            padding: 12px 18px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 15px;
             font-weight: bold;
         }
 
         .tab-btn.active {
-            background: #111827;
+            background: #0f172a;
             color: white;
         }
 
@@ -143,16 +189,17 @@ $html = @"
         }
 
         .subtitulo {
-            margin-top: 10px;
-            margin-bottom: 8px;
+            margin-top: 6px;
+            margin-bottom: 10px;
             font-weight: bold;
+            font-size: 16px;
         }
 
         .filtros {
             display: grid;
             grid-template-columns: repeat(5, minmax(160px, 1fr));
             gap: 10px;
-            margin: 15px 0;
+            margin: 15px 0 12px 0;
         }
 
         input, select {
@@ -160,13 +207,21 @@ $html = @"
             padding: 12px;
             font-size: 15px;
             border: 1px solid #d1d5db;
-            border-radius: 10px;
-            box-sizing: border-box;
+            border-radius: 12px;
             background: white;
+            color: #111827;
+        }
+
+        .resumo {
+            font-size: 14px;
+            color: #4b5563;
+            margin-bottom: 14px;
+            font-weight: 600;
         }
 
         .table-wrap {
             overflow-x: auto;
+            border-radius: 16px;
         }
 
         table {
@@ -177,60 +232,112 @@ $html = @"
         }
 
         th, td {
-            padding: 10px 12px;
+            padding: 12px 14px;
             border-bottom: 1px solid #e5e7eb;
             text-align: left;
             white-space: nowrap;
         }
 
         th {
-            background: #111827;
+            background: #0f172a;
             color: white;
             position: sticky;
             top: 0;
+            z-index: 1;
         }
 
         tr:hover td {
-            background: #f9fafb;
+            background: #f8fafc;
         }
 
-        .resumo {
-            font-size: 14px;
-            color: #4b5563;
-            margin-bottom: 10px;
+        .pill {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #0f172a;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 8px;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1000px) {
+            .stats {
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
+            }
+
             .filtros {
                 grid-template-columns: 1fr;
             }
+        }
 
+        @media (max-width: 640px) {
             body {
                 padding: 12px;
             }
 
-            .card {
+            .hero {
+                padding: 20px;
+            }
+
+            .hero h1 {
+                font-size: 26px;
+            }
+
+            .main-card {
                 padding: 16px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-value {
+                font-size: 22px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <h1>Relat&oacute;rio Informark</h1>
-            <div class="meta">&Uacute;ltima atualiza&ccedil;&atilde;o: $atualizadoEm</div>
+        <section class="hero">
+            <h1>Informark Dashboard</h1>
+            <p>Painel de acompanhamento de preços e relatórios do bot.</p>
+            <div class="pill">Atualizado em $atualizadoEm</div>
+        </section>
+
+        <section class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Registros visíveis</div>
+                <div class="stat-value" id="statRegistros">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Modelos visíveis</div>
+                <div class="stat-value" id="statModelos">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Produto filtrado</div>
+                <div class="stat-value" id="statProduto">Todos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Aba atual</div>
+                <div class="stat-value" id="statAba">Menor Preço</div>
+            </div>
+        </section>
+
+        <section class="main-card">
+            <div class="meta">Última atualização: $atualizadoEm</div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this)">Menor Pre&ccedil;o</button>
-                <button class="tab-btn" onclick="abrirAba('abaPrecos', this)">Planilha de Pre&ccedil;os</button>
+                <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor Preço')">Menor Preço</button>
+                <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de Preços')">Planilha de Preços</button>
             </div>
 
             <div id="abaRelatorio" class="tab-content active">
                 <div class="subtitulo">Arquivo base: $nomeArquivoRelatorio</div>
 
                 <div class="filtros">
-                    <input type="text" id="buscaRelatorio" placeholder="Buscar no relat&oacute;rio...">
+                    <input type="text" id="buscaRelatorio" placeholder="Buscar no relatório...">
                     <select id="produtoRelatorio">
                         <option value="">Todos os produtos</option>
                     </select>
@@ -241,7 +348,7 @@ $html = @"
                         <option value="">Todos os GB</option>
                     </select>
                     <select id="condicaoRelatorio">
-                        <option value="">Todas as condi&ccedil;&otilde;es</option>
+                        <option value="">Todas as condições</option>
                     </select>
                 </div>
 
@@ -253,7 +360,7 @@ $html = @"
                 <div class="subtitulo">Arquivo base: $nomeArquivoPrecos</div>
 
                 <div class="filtros">
-                    <input type="text" id="buscaPrecos" placeholder="Buscar na planilha de pre&ccedil;os...">
+                    <input type="text" id="buscaPrecos" placeholder="Buscar na planilha de preços...">
                     <select id="produtoPrecos">
                         <option value="">Todos os produtos</option>
                     </select>
@@ -264,18 +371,20 @@ $html = @"
                         <option value="">Todos os GB</option>
                     </select>
                     <select id="condicaoPrecos">
-                        <option value="">Todas as condi&ccedil;&otilde;es</option>
+                        <option value="">Todas as condições</option>
                     </select>
                 </div>
 
                 <div class="resumo" id="resumoPrecos"></div>
                 $tabelaPrecos
             </div>
-        </div>
+        </section>
     </div>
 
     <script>
-        function abrirAba(idAba, botao) {
+        let abaAtual = 'Menor Preço';
+
+        function abrirAba(idAba, botao, nomeAba) {
             document.querySelectorAll('.tab-content').forEach(function(aba) {
                 aba.classList.remove('active');
             });
@@ -286,6 +395,10 @@ $html = @"
 
             document.getElementById(idAba).classList.add('active');
             botao.classList.add('active');
+
+            abaAtual = nomeAba;
+            document.getElementById('statAba').textContent = nomeAba;
+            atualizarStatsGerais();
         }
 
         function detectarIndices(tabelaId) {
@@ -334,6 +447,38 @@ $html = @"
                 });
 
             select.value = valorAtual;
+        }
+
+        function atualizarStatsGerais() {
+            const abaAtiva = document.querySelector('.tab-content.active');
+            if (!abaAtiva) return;
+
+            const tabela = abaAtiva.querySelector('table');
+            if (!tabela) return;
+
+            const linhasVisiveis = Array.from(tabela.querySelectorAll('tbody tr')).filter(l => l.style.display !== 'none');
+            document.getElementById('statRegistros').textContent = linhasVisiveis.length;
+
+            const ths = Array.from(tabela.querySelectorAll('thead th')).map(th => th.innerText.trim().toLowerCase());
+            let idxModelo = ths.findIndex(t => t === 'modelo' || t.includes('modelo'));
+            let idxProduto = ths.findIndex(t => t === 'produto' || t.includes('produto'));
+
+            const modelos = new Set();
+            const produtos = new Set();
+
+            linhasVisiveis.forEach(linha => {
+                const tds = linha.querySelectorAll('td');
+                if (idxModelo >= 0 && tds[idxModelo]) modelos.add(tds[idxModelo].innerText.trim());
+                if (idxProduto >= 0 && tds[idxProduto]) produtos.add(tds[idxProduto].innerText.trim());
+            });
+
+            document.getElementById('statModelos').textContent = modelos.size;
+
+            const produtoSelecionado = abaAtiva.id === 'abaRelatorio'
+                ? (document.getElementById('produtoRelatorio')?.value || 'Todos')
+                : (document.getElementById('produtoPrecos')?.value || 'Todos');
+
+            document.getElementById('statProduto').textContent = produtoSelecionado || 'Todos';
         }
 
         function configurarFiltros(config) {
@@ -411,6 +556,8 @@ $html = @"
                 if (resumo) {
                     resumo.textContent = visiveis + ' registro(s) encontrado(s)';
                 }
+
+                atualizarStatsGerais();
             }
 
             popularFiltros();
@@ -443,6 +590,8 @@ $html = @"
             condicaoId: 'condicaoPrecos',
             resumoId: 'resumoPrecos'
         });
+
+        atualizarStatsGerais();
     </script>
 </body>
 </html>
@@ -451,4 +600,4 @@ $html = @"
 $destino = Join-Path $docs "index.html"
 [System.IO.File]::WriteAllText($destino, $html, [System.Text.UTF8Encoding]::new($false))
 
-Write-Host "HTML gerado em docs\index.html com filtros de produto, modelo, GB e condição"
+Write-Host "HTML gerado em docs\index.html - dashboard 2.0"
