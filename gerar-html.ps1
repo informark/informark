@@ -207,7 +207,7 @@ $html = @"
 
         .filtros {
             display: grid;
-            grid-template-columns: repeat(7, minmax(140px, 1fr));
+            grid-template-columns: repeat(8, minmax(140px, 1fr));
             gap: 10px;
             margin: 15px 0 12px 0;
         }
@@ -305,56 +305,56 @@ $html = @"
     <div class="container">
         <section class="hero">
             <h1>Informark Dashboard</h1>
-            <p>Painel de acompanhamento de preços e relatórios do bot.</p>
+            <p>Painel de acompanhamento de pre&ccedil;os e relat&oacute;rios do bot.</p>
             <div class="pill">Atualizado em $atualizadoEm</div>
         </section>
 
         <section class="stats">
             <div class="stat-card">
-                <div class="stat-label">Registros visíveis</div>
+                <div class="stat-label">Registros vis&iacute;veis</div>
                 <div class="stat-value" id="statRegistros">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Modelos visíveis</div>
+                <div class="stat-label">Modelos vis&iacute;veis</div>
                 <div class="stat-value" id="statModelos">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Menor preço visível</div>
+                <div class="stat-label">Menor pre&ccedil;o vis&iacute;vel</div>
                 <div class="stat-value" id="statMinPreco">-</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Maior preço visível</div>
+                <div class="stat-label">Maior pre&ccedil;o vis&iacute;vel</div>
                 <div class="stat-value" id="statMaxPreco">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Aba atual</div>
-                <div class="stat-value" id="statAba">Menor Preço</div>
+                <div class="stat-value" id="statAba">Menor Pre&ccedil;o</div>
             </div>
         </section>
 
         <section class="main-card">
-            <div class="meta">Última atualização: $atualizadoEm</div>
+            <div class="meta">&Uacute;ltima atualiza&ccedil;&atilde;o: $atualizadoEm</div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor Preço')">Menor Preço</button>
-                <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de Preços')">Planilha de Preços</button>
+                <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor Preço')">Menor Pre&ccedil;o</button>
+                <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de Preços')">Planilha de Pre&ccedil;os</button>
             </div>
 
             <div id="abaRelatorio" class="tab-content active">
                 <div class="subtitulo">Arquivo base: $nomeArquivoRelatorio</div>
 
                 <div class="filtros">
-                    <input type="text" id="buscaRelatorio" placeholder="Buscar no relatório...">
+                    <input type="text" id="buscaRelatorio" placeholder="Buscar no relat&oacute;rio...">
                     <select id="produtoRelatorio"><option value="">Todos os produtos</option></select>
                     <select id="modeloRelatorio"><option value="">Todos os modelos</option></select>
                     <select id="gbRelatorio"><option value="">Todos os GB</option></select>
-                    <select id="condicaoRelatorio"><option value="">Todas as condições</option></select>
-                    <input type="number" id="precoMinRelatorio" placeholder="Preço mínimo">
-                    <input type="number" id="precoMaxRelatorio" placeholder="Preço máximo">
+                    <select id="condicaoRelatorio"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+                    <input type="number" id="precoMinRelatorio" placeholder="Pre&ccedil;o m&iacute;nimo">
+                    <input type="number" id="precoMaxRelatorio" placeholder="Pre&ccedil;o m&aacute;ximo">
                     <select id="ordenacaoRelatorio">
-                        <option value="">Ordenação padrão</option>
-                        <option value="preco-asc">Preço: menor para maior</option>
-                        <option value="preco-desc">Preço: maior para menor</option>
+                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
                     </select>
                 </div>
 
@@ -366,17 +366,17 @@ $html = @"
                 <div class="subtitulo">Arquivo base: $nomeArquivoPrecos</div>
 
                 <div class="filtros">
-                    <input type="text" id="buscaPrecos" placeholder="Buscar na planilha de preços...">
+                    <input type="text" id="buscaPrecos" placeholder="Buscar na planilha de pre&ccedil;os...">
                     <select id="produtoPrecos"><option value="">Todos os produtos</option></select>
                     <select id="modeloPrecos"><option value="">Todos os modelos</option></select>
                     <select id="gbPrecos"><option value="">Todos os GB</option></select>
-                    <select id="condicaoPrecos"><option value="">Todas as condições</option></select>
-                    <input type="number" id="precoMinPrecos" placeholder="Preço mínimo">
-                    <input type="number" id="precoMaxPrecos" placeholder="Preço máximo">
+                    <select id="condicaoPrecos"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+                    <input type="number" id="precoMinPrecos" placeholder="Pre&ccedil;o m&iacute;nimo">
+                    <input type="number" id="precoMaxPrecos" placeholder="Pre&ccedil;o m&aacute;ximo">
                     <select id="ordenacaoPrecos">
-                        <option value="">Ordenação padrão</option>
-                        <option value="preco-asc">Preço: menor para maior</option>
-                        <option value="preco-desc">Preço: maior para menor</option>
+                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
                     </select>
                 </div>
 
@@ -399,7 +399,12 @@ $html = @"
             document.getElementById(idAba).classList.add('active');
             botao.classList.add('active');
 
-            document.getElementById('statAba').textContent = nomeAba;
+            if (nomeAba === 'Menor Preço') {
+                document.getElementById('statAba').innerHTML = 'Menor Pre&ccedil;o';
+            } else {
+                document.getElementById('statAba').innerHTML = 'Planilha de Pre&ccedil;os';
+            }
+
             atualizarStatsGerais();
         }
 
@@ -426,7 +431,7 @@ $html = @"
                 modelo: acharIndiceExatoOuParcial(['modelo', 'nome modelo']),
                 gb: acharIndiceExatoOuParcial(['gb', 'armazenamento', 'memoria', 'memória', 'capacidade']),
                 condicao: acharIndiceExatoOuParcial(['condicao', 'condição', 'estado']),
-                preco: acharIndiceExatoOuParcial(['preco', 'preço', 'valor'])
+                preco: acharIndiceExatoOuParcial(['preco', 'preço', 'valor', 'menorpreco', 'menor preço'])
             };
         }
 
@@ -475,7 +480,7 @@ $html = @"
 
             const ths = Array.from(tabela.querySelectorAll('thead th')).map(th => th.innerText.trim().toLowerCase());
             const idxModelo = ths.findIndex(t => t === 'modelo' || t.includes('modelo'));
-            const idxPreco = ths.findIndex(t => t === 'preço' || t === 'preco' || t.includes('preço') || t.includes('preco'));
+            const idxPreco = ths.findIndex(t => t === 'preço' || t === 'preco' || t.includes('preço') || t.includes('preco') || t.includes('menorpreco'));
 
             const modelos = new Set();
             const precos = [];
@@ -651,4 +656,4 @@ $html = @"
 $destino = Join-Path $docs "index.html"
 [System.IO.File]::WriteAllText($destino, $html, [System.Text.UTF8Encoding]::new($false))
 
-Write-Host "HTML gerado em docs\index.html - dashboard 3.0"
+Write-Host "HTML gerado em docs\index.html - dashboard 3.0 corrigido"

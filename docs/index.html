@@ -131,7 +131,7 @@
 
         .filtros {
             display: grid;
-            grid-template-columns: repeat(7, minmax(140px, 1fr));
+            grid-template-columns: repeat(8, minmax(140px, 1fr));
             gap: 10px;
             margin: 15px 0 12px 0;
         }
@@ -229,56 +229,56 @@
     <div class="container">
         <section class="hero">
             <h1>Informark Dashboard</h1>
-            <p>Painel de acompanhamento de preÃ§os e relatÃ³rios do bot.</p>
-            <div class="pill">Atualizado em 07/03/2026 23:44:12</div>
+            <p>Painel de acompanhamento de pre&ccedil;os e relat&oacute;rios do bot.</p>
+            <div class="pill">Atualizado em 07/03/2026 23:45:13</div>
         </section>
 
         <section class="stats">
             <div class="stat-card">
-                <div class="stat-label">Registros visÃ­veis</div>
+                <div class="stat-label">Registros vis&iacute;veis</div>
                 <div class="stat-value" id="statRegistros">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Modelos visÃ­veis</div>
+                <div class="stat-label">Modelos vis&iacute;veis</div>
                 <div class="stat-value" id="statModelos">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Menor preÃ§o visÃ­vel</div>
+                <div class="stat-label">Menor pre&ccedil;o vis&iacute;vel</div>
                 <div class="stat-value" id="statMinPreco">-</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Maior preÃ§o visÃ­vel</div>
+                <div class="stat-label">Maior pre&ccedil;o vis&iacute;vel</div>
                 <div class="stat-value" id="statMaxPreco">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Aba atual</div>
-                <div class="stat-value" id="statAba">Menor PreÃ§o</div>
+                <div class="stat-value" id="statAba">Menor Pre&ccedil;o</div>
             </div>
         </section>
 
         <section class="main-card">
-            <div class="meta">Ãšltima atualizaÃ§Ã£o: 07/03/2026 23:44:12</div>
+            <div class="meta">&Uacute;ltima atualiza&ccedil;&atilde;o: 07/03/2026 23:45:13</div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor PreÃ§o')">Menor PreÃ§o</button>
-                <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de PreÃ§os')">Planilha de PreÃ§os</button>
+                <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor PreÃ§o')">Menor Pre&ccedil;o</button>
+                <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de PreÃ§os')">Planilha de Pre&ccedil;os</button>
             </div>
 
             <div id="abaRelatorio" class="tab-content active">
                 <div class="subtitulo">Arquivo base: relatorio_menor_preco_2026-03-07.csv</div>
 
                 <div class="filtros">
-                    <input type="text" id="buscaRelatorio" placeholder="Buscar no relatÃ³rio...">
+                    <input type="text" id="buscaRelatorio" placeholder="Buscar no relat&oacute;rio...">
                     <select id="produtoRelatorio"><option value="">Todos os produtos</option></select>
                     <select id="modeloRelatorio"><option value="">Todos os modelos</option></select>
                     <select id="gbRelatorio"><option value="">Todos os GB</option></select>
-                    <select id="condicaoRelatorio"><option value="">Todas as condiÃ§Ãµes</option></select>
-                    <input type="number" id="precoMinRelatorio" placeholder="PreÃ§o mÃ­nimo">
-                    <input type="number" id="precoMaxRelatorio" placeholder="PreÃ§o mÃ¡ximo">
+                    <select id="condicaoRelatorio"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+                    <input type="number" id="precoMinRelatorio" placeholder="Pre&ccedil;o m&iacute;nimo">
+                    <input type="number" id="precoMaxRelatorio" placeholder="Pre&ccedil;o m&aacute;ximo">
                     <select id="ordenacaoRelatorio">
-                        <option value="">OrdenaÃ§Ã£o padrÃ£o</option>
-                        <option value="preco-asc">PreÃ§o: menor para maior</option>
-                        <option value="preco-desc">PreÃ§o: maior para menor</option>
+                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
                     </select>
                 </div>
 
@@ -3015,17 +3015,17 @@
                 <div class="subtitulo">Arquivo base: precos.csv</div>
 
                 <div class="filtros">
-                    <input type="text" id="buscaPrecos" placeholder="Buscar na planilha de preÃ§os...">
+                    <input type="text" id="buscaPrecos" placeholder="Buscar na planilha de pre&ccedil;os...">
                     <select id="produtoPrecos"><option value="">Todos os produtos</option></select>
                     <select id="modeloPrecos"><option value="">Todos os modelos</option></select>
                     <select id="gbPrecos"><option value="">Todos os GB</option></select>
-                    <select id="condicaoPrecos"><option value="">Todas as condiÃ§Ãµes</option></select>
-                    <input type="number" id="precoMinPrecos" placeholder="PreÃ§o mÃ­nimo">
-                    <input type="number" id="precoMaxPrecos" placeholder="PreÃ§o mÃ¡ximo">
+                    <select id="condicaoPrecos"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+                    <input type="number" id="precoMinPrecos" placeholder="Pre&ccedil;o m&iacute;nimo">
+                    <input type="number" id="precoMaxPrecos" placeholder="Pre&ccedil;o m&aacute;ximo">
                     <select id="ordenacaoPrecos">
-                        <option value="">OrdenaÃ§Ã£o padrÃ£o</option>
-                        <option value="preco-asc">PreÃ§o: menor para maior</option>
-                        <option value="preco-desc">PreÃ§o: maior para menor</option>
+                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
                     </select>
                 </div>
 
@@ -30581,7 +30581,12 @@
             document.getElementById(idAba).classList.add('active');
             botao.classList.add('active');
 
-            document.getElementById('statAba').textContent = nomeAba;
+            if (nomeAba === 'Menor PreÃ§o') {
+                document.getElementById('statAba').innerHTML = 'Menor Pre&ccedil;o';
+            } else {
+                document.getElementById('statAba').innerHTML = 'Planilha de Pre&ccedil;os';
+            }
+
             atualizarStatsGerais();
         }
 
@@ -30608,7 +30613,7 @@
                 modelo: acharIndiceExatoOuParcial(['modelo', 'nome modelo']),
                 gb: acharIndiceExatoOuParcial(['gb', 'armazenamento', 'memoria', 'memÃ³ria', 'capacidade']),
                 condicao: acharIndiceExatoOuParcial(['condicao', 'condiÃ§Ã£o', 'estado']),
-                preco: acharIndiceExatoOuParcial(['preco', 'preÃ§o', 'valor'])
+                preco: acharIndiceExatoOuParcial(['preco', 'preÃ§o', 'valor', 'menorpreco', 'menor preÃ§o'])
             };
         }
 
@@ -30657,7 +30662,7 @@
 
             const ths = Array.from(tabela.querySelectorAll('thead th')).map(th => th.innerText.trim().toLowerCase());
             const idxModelo = ths.findIndex(t => t === 'modelo' || t.includes('modelo'));
-            const idxPreco = ths.findIndex(t => t === 'preÃ§o' || t === 'preco' || t.includes('preÃ§o') || t.includes('preco'));
+            const idxPreco = ths.findIndex(t => t === 'preÃ§o' || t === 'preco' || t.includes('preÃ§o') || t.includes('preco') || t.includes('menorpreco'));
 
             const modelos = new Set();
             const precos = [];
