@@ -229,39 +229,6 @@ $html = @"
             font-weight: 600;
         }
 
-        .modelos-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            margin: 8px 0 18px 0;
-        }
-
-        .modelo-card {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 14px;
-        }
-
-        .modelo-titulo {
-            font-size: 16px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 6px;
-        }
-
-        .modelo-preco {
-            font-size: 22px;
-            font-weight: 800;
-            color: #111827;
-            margin-bottom: 4px;
-        }
-
-        .modelo-qtd {
-            font-size: 13px;
-            color: #6b7280;
-        }
-
         .table-wrap {
             overflow-x: auto;
             border-radius: 16px;
@@ -331,10 +298,6 @@ $html = @"
             .stat-value {
                 font-size: 20px;
             }
-
-            .modelo-preco {
-                font-size: 18px;
-            }
         }
     </style>
 </head>
@@ -396,7 +359,6 @@ $html = @"
                 </div>
 
                 <div class="resumo" id="resumoRelatorio"></div>
-                <div class="modelos-cards" id="cardsModelosRelatorio"></div>
                 $tabelaRelatorio
             </div>
 
@@ -419,7 +381,6 @@ $html = @"
                 </div>
 
                 <div class="resumo" id="resumoPrecos"></div>
-                <div class="modelos-cards" id="cardsModelosPrecos"></div>
                 $tabelaPrecos
             </div>
         </section>
@@ -512,75 +473,6 @@ $html = @"
             return 'R$ ' + valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
-        function atualizarCardsModelos() {
-            const configs = [
-                { abaId: 'abaRelatorio', cardsId: 'cardsModelosRelatorio' },
-                { abaId: 'abaPrecos', cardsId: 'cardsModelosPrecos' }
-            ];
-
-            configs.forEach(cfg => {
-                const aba = document.getElementById(cfg.abaId);
-                const cardsWrap = document.getElementById(cfg.cardsId);
-                if (!aba || !cardsWrap) return;
-
-                const tabela = aba.querySelector('table');
-                if (!tabela) {
-                    cardsWrap.innerHTML = '';
-                    return;
-                }
-
-                const ths = Array.from(tabela.querySelectorAll('thead th')).map(th => th.innerText.trim().toLowerCase());
-                const idxModelo = ths.findIndex(t => t === 'modelo' || t.includes('modelo'));
-                const idxPreco = ths.findIndex(t => t === 'preço' || t === 'preco' || t.includes('preço') || t.includes('preco') || t.includes('menorpreco'));
-
-                const linhasVisiveis = Array.from(tabela.querySelectorAll('tbody tr')).filter(l => l.style.display !== 'none');
-
-                const mapa = new Map();
-
-                linhasVisiveis.forEach(linha => {
-                    const tds = linha.querySelectorAll('td');
-                    const modelo = idxModelo >= 0 && tds[idxModelo] ? tds[idxModelo].innerText.trim() : '';
-                    const preco = idxPreco >= 0 && tds[idxPreco] ? extrairNumeroPreco(tds[idxPreco].innerText.trim()) : NaN;
-
-                    if (!modelo) return;
-
-                    if (!mapa.has(modelo)) {
-                        mapa.set(modelo, { qtd: 0, menor: NaN });
-                    }
-
-                    const item = mapa.get(modelo);
-                    item.qtd += 1;
-
-                    if (!isNaN(preco)) {
-                        if (isNaN(item.menor) || preco < item.menor) {
-                            item.menor = preco;
-                        }
-                    }
-                });
-
-                const cards = Array.from(mapa.entries())
-                    .sort((a, b) => {
-                        const aMenor = isNaN(a[1].menor) ? Number.MAX_VALUE : a[1].menor;
-                        const bMenor = isNaN(b[1].menor) ? Number.MAX_VALUE : b[1].menor;
-                        return aMenor - bMenor;
-                    })
-                    .slice(0, 12);
-
-                if (cards.length === 0) {
-                    cardsWrap.innerHTML = '';
-                    return;
-                }
-
-                cardsWrap.innerHTML = cards.map(([modelo, info]) => `
-                    <div class="modelo-card">
-                        <div class="modelo-titulo">${modelo}</div>
-                        <div class="modelo-preco">${formatarPreco(info.menor)}</div>
-                        <div class="modelo-qtd">${info.qtd} anúncio(s)</div>
-                    </div>
-                `).join('');
-            });
-        }
-
         function atualizarStatsGerais() {
             const abaAtiva = document.querySelector('.tab-content.active');
             if (!abaAtiva) return;
@@ -610,8 +502,6 @@ $html = @"
             document.getElementById('statModelos').textContent = modelos.size;
             document.getElementById('statMinPreco').textContent = precos.length ? formatarPreco(Math.min(...precos)) : '-';
             document.getElementById('statMaxPreco').textContent = precos.length ? formatarPreco(Math.max(...precos)) : '-';
-
-            atualizarCardsModelos();
         }
 
         function configurarFiltros(config) {
@@ -771,4 +661,4 @@ $html = @"
 $destino = Join-Path $docs "index.html"
 [System.IO.File]::WriteAllText($destino, $html, [System.Text.UTF8Encoding]::new($false))
 
-Write-Host "HTML gerado em docs\index.html - dashboard com cards por modelo"
+Write-Host "HTML gerado em docs\index.html - dashboard 3.0 corrigido"
