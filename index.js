@@ -2470,13 +2470,17 @@ if (produto === "MacBook") {
 
     if (produto === "Apple Watch") armazenamento = "";
 
-    if (produto === "iPhone" && !armazenamento) {
-      const inf2 = inferirIphoneSemPalavra(bloco);
-      if (inf2) {
-        modelo = modelo && modelo !== "Não informado" ? modelo : inf2.modelo;
-        armazenamento = inf2.armazenamento;
-      }
+    if (produto === "iPhone" && (!armazenamento || !modelo || modelo === "Não informado")) {
+  const inf2 = inferirIphoneSemPalavra(bloco);
+  if (inf2) {
+    if (!modelo || modelo === "Não informado") {
+      modelo = inf2.modelo;
     }
+    if (!armazenamento) {
+      armazenamento = inf2.armazenamento;
+    }
+  }
+}
 
     if (!contextoProduto && produto === "Outro") {
       const inf = inferirIphoneSemPalavra(bloco);
