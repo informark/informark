@@ -1945,8 +1945,11 @@ if (/\bs\d{1,2}\b/i.test(t) && /\b(64|128|256|512)\s*gb\b/i.test(t)) return "Sam
 // ✅ Apple Watch só se tiver contexto forte de Watch
 const temContextoWatch = /\b(apple\s*watch|watch|series|ultra|se|\bmm\b)\b/i.test(t);
 const temSerieS = /\bs\d{1,2}\b/i.test(t);
+const temTamanhoWatch = /\b(3[8-9]|4[0-9])\s*m(?:\s*m)?\b/i.test(t);
 
-if (temContextoWatch && (temSerieS || /\bultra\b/i.test(t))) return "Apple Watch";
+if ((temContextoWatch && (temSerieS || /\bultra\b/i.test(t))) || (temSerieS && temTamanhoWatch)) {
+  return "Apple Watch";
+}
 
   // ✅ JBL primeiro (pra "cabo" não derrubar pra acessório)
 if (/\bjbl\b/i.test(t) || /(partybox|boom?box|encore)/i.test(t)) return "JBL";
@@ -2433,26 +2436,29 @@ if (/^\s*(lacrados?|novo(s)?|zero|selado(s)?)\s*$/i.test(low)) {
     }
 
     if (baseIphoneCompleta && buffer.length === 0) {
-      const precoLinha = extrairPrecoLinhaVariacao(linha);
+  const precoLinha = extrairPrecoLinhaVariacao(linha);
 
-      if (precoLinha) {
-        const pareceNovoItem =
-          /\b(iphone|ipad|macbook|airpods|watch|garmin|jbl|samsung|xiaomi|motorola|realme|poco)\b/i.test(linha) ||
-          /\b(1[0-9])\b(?![.,]\d{3}\b)/i.test(linha);
+  if (precoLinha) {
+    const pareceNovoItem =
+      /\b(iphone|ipad|macbook|airpods|watch|apple watch|garmin|jbl|samsung|xiaomi|motorola|realme|poco|ps4|ps5|playstation|xbox)\b/i.test(linha) ||
+      /\b(ultra|series|se)\b/i.test(linha) ||
+      /\bs\d{1,2}\b/i.test(linha) ||
+      /\b(3[8-9]|4[0-9])\s*m(?:\s*m)?\b/i.test(linha) ||
+      /\b(1[0-9])\b(?![.,]\d{3}\b)/i.test(linha);
 
-        if (!pareceNovoItem) {
-          itens.push({
-            produto: ultimoItemBase.produto,
-            modelo: ultimoItemBase.modelo,
-            armazenamento: ultimoItemBase.armazenamento,
-            condicao: ultimoItemBase.condicao,
-            preco: precoLinha,
-            descricaoItem: `${linha}`,
-          });
-          continue;
-        }
-      }
+    if (!pareceNovoItem) {
+      itens.push({
+        produto: ultimoItemBase.produto,
+        modelo: ultimoItemBase.modelo,
+        armazenamento: ultimoItemBase.armazenamento,
+        condicao: ultimoItemBase.condicao,
+        preco: precoLinha,
+        descricaoItem: `${linha}`,
+      });
+      continue;
     }
+  }
+}
 
     // Se for seção de Acessório e a linha não tem preço, não carrega para o próximo item
 if ((contextoProduto === "Acessório") && !extrairPreco(linha)) {
