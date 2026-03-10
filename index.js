@@ -2667,6 +2667,7 @@ function extrairItensDeLista(texto) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[*_~().]/g, "")
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -2695,6 +2696,12 @@ function extrairItensDeLista(texto) {
     "consoles",
     "games",
     "jogos",
+    "baterias",
+    "bateria",
+    "pecas",
+    "peca",
+    "peças",
+    "peça",
   ].includes(t);
 }
 
@@ -2708,13 +2715,14 @@ function extrairItensDeLista(texto) {
   contextoCondicao = null;
 
   const titulo = (linha || "")
-    .toString()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[*_~().]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  .toString()
+  .toLowerCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[*_~().]/g, "")
+  .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
+  .replace(/\s+/g, " ")
+  .trim();
 
   if (titulo === "apple") contextoProduto = "Acessório";
   else if (titulo === "garmin") contextoProduto = "Garmin";
@@ -2731,6 +2739,16 @@ function extrairItensDeLista(texto) {
   else if (titulo === "cameras" || titulo === "drones") contextoProduto = "Câmera/Drone";
   else if (titulo === "veiculos") contextoProduto = "Veículo";
   else if (titulo === "consoles" || titulo === "games" || titulo === "jogos") contextoProduto = "Console";
+  
+  else if (
+  titulo === "baterias" ||
+  titulo === "bateria" ||
+  titulo === "pecas" ||
+  titulo === "peca" ||
+  titulo === "peças" ||
+  titulo === "peça"
+) contextoProduto = "Peça";
+  
   else contextoProduto = null;
 
   continue;
@@ -2928,6 +2946,11 @@ buffer.push(linha);
 
 const bloco = buffer.join(" | ");
 const preco = extrairPrecoSeguro(linha, bloco);
+
+if (contextoProduto === "Peça") {
+  buffer = [];
+  continue;
+}
     
 
 if (!preco) continue;
