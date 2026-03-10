@@ -2082,9 +2082,9 @@ if (/\bs\d{1,2}\s*fe\b/i.test(t)) return "Samsung";
 if (/\bs\d{1,2}\b/i.test(t) && /\b(64|128|256|512)\s*gb\b/i.test(t)) return "Samsung";
 
 // ✅ Apple Watch só se tiver contexto forte de Watch
-const temContextoWatch = /\b(apple\s*watch|watch|series|ultra|se|\bmm\b)\b/i.test(t);
-const temSerieS = /\bs\d{1,2}\b/i.test(t);
-const temTamanhoWatch = /\b(3[8-9]|4[0-9])\s*m(?:\s*m)?\b/i.test(t);
+const temContextoWatch = /\b(apple\s*watch|watch|s[eé]ries?|ultra|se|mm)\b/i.test(t);
+const temSerieS = /\bs\d{1,2}\b/i.test(t) || /\bs[eé]ries?\s*\d{1,2}\b/i.test(t);
+const temTamanhoWatch = /(?:^|[\/\s])(3[8-9]|4[0-9])\s*m(?:\s*m)?\b/i.test(t);
 
 if ((temContextoWatch && (temSerieS || /\bultra\b/i.test(t))) || (temSerieS && temTamanhoWatch)) {
   return "Apple Watch";
@@ -2177,29 +2177,28 @@ function extrairModelo(texto, produto) {
   }
 
   if (produto === "Apple Watch") {
-    const tx2 = (texto || "").toLowerCase();
+  const tx2 = (texto || "").toLowerCase();
 
-    let m = tx2.match(/\bultra\s*(\d{1,2})?\b/i);
-    const ultra = m ? `ULTRA${m[1] ? " " + m[1] : ""}` : "";
+  let m = tx2.match(/\bultra\s*(\d{1,2})?\b/i);
+  const ultra = m ? `ULTRA${m[1] ? " " + m[1] : ""}` : "";
 
-    m = tx2.match(/\bse\s*(\d{1,2})\b/i);
-    const se = m ? `SE ${m[1]}` : "";
+  m = tx2.match(/\bse\s*(\d{1,2})\b/i);
+  const se = m ? `SE ${m[1]}` : "";
 
-    // ✅ aceita "Series 11" como "S11"
-m = tx2.match(/\bseries\s*(\d{1,2})\b/i);
-const series = m ? `S${m[1]}` : "";
+  m = tx2.match(/\bs[eé]ries?\s*(\d{1,2})\b/i);
+  const series = m ? `S${m[1]}` : "";
 
-    m = tx2.match(/\bs(\d{1,2})\b/i);
-    const serie = m ? `S${m[1]}` : "";
+  m = tx2.match(/\bs(\d{1,2})\b/i);
+  const serie = m ? `S${m[1]}` : "";
 
-    const mm = tx2.match(/\b(3[8-9]|4[0-9])\s*m(?:\s*m)?\b/i);
-    const tamanho = mm ? `${mm[1]}mm` : "";
+  const mm = tx2.match(/(?:^|[\/\s])(3[8-9]|4[0-9])\s*m(?:\s*m)?\b/i);
+  const tamanho = mm ? `${mm[1]}mm` : "";
 
-    const base = ultra || se || series || serie;
+  const base = ultra || se || series || serie;
 
-    const modelo = [base, tamanho].filter(Boolean).join(" ");
-    return modelo || "Apple Watch (modelo não informado)";
-  }
+  const modelo = [base, tamanho].filter(Boolean).join(" ");
+  return modelo || "Apple Watch (modelo não informado)";
+}
 
   if (produto === "AirPods") {
     let m = tx.match(/\bpro\s*(\d{1,2})\b/i);
