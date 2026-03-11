@@ -230,7 +230,7 @@
         <section class="hero">
             <h1>Informark Dashboard</h1>
             <p>Painel de acompanhamento de pre&ccedil;os e relat&oacute;rios do bot.</p>
-            <div class="pill">Atualizado em 11/03/2026 18:17:34</div>
+            <div class="pill">Atualizado em 11/03/2026 18:18:34</div>
         </section>
 
         <section class="stats">
@@ -257,11 +257,12 @@
         </section>
 
         <section class="main-card">
-            <div class="meta">&Uacute;ltima atualiza&ccedil;&atilde;o: 11/03/2026 18:17:34</div>
+            <div class="meta">&Uacute;ltima atualiza&ccedil;&atilde;o: 11/03/2026 18:18:34</div>
 
             <div class="tabs">
                 <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor PreÃ§o')">Menor Pre&ccedil;o</button>
                 <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de PreÃ§os')">Planilha de Pre&ccedil;os</button>
+                <button class="tab-btn" onclick="abrirAba('abaPrecoDia', this, 'Preco do dia')">Preco do dia</button>
             </div>
 
             <div id="abaRelatorio" class="tab-content active">
@@ -15235,6 +15236,28 @@
     </table>
 </div>
             </div>
+
+            <div id="abaPrecoDia" class="tab-content">
+                <div class="subtitulo">Arquivo base: preco_dia.xlsx nÃ£o encontrado</div>
+
+                <div class="filtros">
+                    <input type="text" id="buscaPrecoDia" placeholder="Buscar na planilha preco do dia...">
+                    <select id="produtoPrecoDia"><option value="">Todos os produtos</option></select>
+                    <select id="modeloPrecoDia"><option value="">Todos os modelos</option></select>
+                    <select id="gbPrecoDia"><option value="">Todos os GB</option></select>
+                    <select id="condicaoPrecoDia"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+                    <input type="number" id="precoMinPrecoDia" placeholder="Pre&ccedil;o m&iacute;nimo">
+                    <input type="number" id="precoMaxPrecoDia" placeholder="Pre&ccedil;o m&aacute;ximo">
+                    <select id="ordenacaoPrecoDia">
+                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
+                    </select>
+                </div>
+
+                <div class="resumo" id="resumoPrecoDia"></div>
+                <p>Nenhum dado encontrado.</p>
+            </div>
         </section>
     </div>
 
@@ -15253,8 +15276,10 @@
 
             if (nomeAba === 'Menor PreÃ§o') {
                 document.getElementById('statAba').innerHTML = 'Menor Pre&ccedil;o';
-            } else {
+            } else if (nomeAba === 'Planilha de PreÃ§os') {
                 document.getElementById('statAba').innerHTML = 'Planilha de Pre&ccedil;os';
+            } else {
+                document.getElementById('statAba').innerHTML = 'Preco do dia';
             }
 
             atualizarStatsGerais();
@@ -15502,6 +15527,19 @@
             precoMaxId: 'precoMaxPrecos',
             ordenacaoId: 'ordenacaoPrecos',
             resumoId: 'resumoPrecos'
+        });
+
+        configurarFiltros({
+            tabelaId: 'tabelaPrecoDia',
+            buscaId: 'buscaPrecoDia',
+            produtoId: 'produtoPrecoDia',
+            modeloId: 'modeloPrecoDia',
+            gbId: 'gbPrecoDia',
+            condicaoId: 'condicaoPrecoDia',
+            precoMinId: 'precoMinPrecoDia',
+            precoMaxId: 'precoMaxPrecoDia',
+            ordenacaoId: 'ordenacaoPrecoDia',
+            resumoId: 'resumoPrecoDia'
         });
 
         atualizarStatsGerais();

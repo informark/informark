@@ -3,11 +3,12 @@ $docs = Join-Path $origem "docs"
 
 New-Item -ItemType Directory -Force -Path $docs | Out-Null
 
-$arquivoRelatorio = Get-ChildItem -Path $origem -Filter "relatorio_menor_preco_*.csv" |
+$arquivoRelatorio = Get-ChildItem -Path $origem -Filter "relatorio_menor_preco_*.csv" -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
 
 $arquivoPrecos = Join-Path $origem "precos.csv"
+$arquivoPrecoDia = Join-Path $origem "preco_dia.xlsx"
 
 function Nova-TabelaHtml {
     param (
@@ -55,8 +56,81 @@ $tbody
 "@
 }
 
+function Importar-XlsxComoObjetos {
+    param (
+        [string]$CaminhoArquivo
+    )
+
+    $resultado = @()
+
+    if (-not (Test-Path $CaminhoArquivo)) {
+        return $resultado
+    }
+
+    $excel = $null
+    $workbook = $null
+
+    try {
+        $excel = New-Object -ComObject Excel.Application
+        $excel.Visible = $false
+        $excel.DisplayAlerts = $false
+
+        $workbook = $excel.Workbooks.Open($CaminhoArquivo)
+        $worksheet = $workbook.Worksheets.Item(1)
+        $usedRange = $worksheet.UsedRange
+
+        $rowCount = $usedRange.Rows.Count
+        $colCount = $usedRange.Columns.Count
+
+        if ($rowCount -lt 2 -or $colCount -lt 1) {
+            return @()
+        }
+
+        $headers = @()
+        for ($col = 1; $col -le $colCount; $col++) {
+            $headerText = [string]$usedRange.Cells.Item(1, $col).Text
+            if ([string]::IsNullOrWhiteSpace($headerText)) {
+                $headerText = "Coluna$col"
+            }
+            $headers += $headerText.Trim()
+        }
+
+        for ($row = 2; $row -le $rowCount; $row++) {
+            $obj = [ordered]@{}
+            $temConteudo = $false
+
+            for ($col = 1; $col -le $colCount; $col++) {
+                $valor = [string]$usedRange.Cells.Item($row, $col).Text
+                if (-not [string]::IsNullOrWhiteSpace($valor)) {
+                    $temConteudo = $true
+                }
+                $obj[$headers[$col - 1]] = $valor
+            }
+
+            if ($temConteudo) {
+                $resultado += [PSCustomObject]$obj
+            }
+        }
+    }
+    finally {
+        if ($workbook) { $workbook.Close($false) | Out-Null }
+        if ($excel) { $excel.Quit() | Out-Null }
+
+        if ($usedRange) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($usedRange) }
+        if ($worksheet) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($worksheet) }
+        if ($workbook) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($workbook) }
+        if ($excel) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel) }
+
+        [GC]::Collect()
+        [GC]::WaitForPendingFinalizers()
+    }
+
+    return $resultado
+}
+
 $dadosRelatorio = @()
 $dadosPrecos = @()
+$dadosPrecoDia = @()
 
 if ($arquivoRelatorio) {
     $dadosRelatorio = Import-Csv $arquivoRelatorio.FullName
@@ -66,12 +140,18 @@ if (Test-Path $arquivoPrecos) {
     $dadosPrecos = Import-Csv $arquivoPrecos
 }
 
+if (Test-Path $arquivoPrecoDia) {
+    $dadosPrecoDia = Importar-XlsxComoObjetos -CaminhoArquivo $arquivoPrecoDia
+}
+
 $tabelaRelatorio = Nova-TabelaHtml -Dados $dadosRelatorio -IdTabela "tabelaRelatorio"
 $tabelaPrecos = Nova-TabelaHtml -Dados $dadosPrecos -IdTabela "tabelaPrecos"
+$tabelaPrecoDia = Nova-TabelaHtml -Dados $dadosPrecoDia -IdTabela "tabelaPrecoDia"
 
 $atualizadoEm = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
 $nomeArquivoRelatorio = if ($arquivoRelatorio) { $arquivoRelatorio.Name } else { "Nenhum relatório encontrado" }
 $nomeArquivoPrecos = if (Test-Path $arquivoPrecos) { "precos.csv" } else { "precos.csv não encontrado" }
+$nomeArquivoPrecoDia = if (Test-Path $arquivoPrecoDia) { "preco_dia.xlsx" } else { "preco_dia.xlsx não encontrado" }
 
 $html = @"
 <!DOCTYPE html>
@@ -338,6 +418,7 @@ $html = @"
             <div class="tabs">
                 <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor Preço')">Menor Pre&ccedil;o</button>
                 <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de Preços')">Planilha de Pre&ccedil;os</button>
+                <button class="tab-btn" onclick="abrirAba('abaPrecoDia', this, 'Preco do dia')">Preco do dia</button>
             </div>
 
             <div id="abaRelatorio" class="tab-content active">
@@ -383,6 +464,28 @@ $html = @"
                 <div class="resumo" id="resumoPrecos"></div>
                 $tabelaPrecos
             </div>
+
+            <div id="abaPrecoDia" class="tab-content">
+                <div class="subtitulo">Arquivo base: $nomeArquivoPrecoDia</div>
+
+                <div class="filtros">
+                    <input type="text" id="buscaPrecoDia" placeholder="Buscar na planilha preco do dia...">
+                    <select id="produtoPrecoDia"><option value="">Todos os produtos</option></select>
+                    <select id="modeloPrecoDia"><option value="">Todos os modelos</option></select>
+                    <select id="gbPrecoDia"><option value="">Todos os GB</option></select>
+                    <select id="condicaoPrecoDia"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+                    <input type="number" id="precoMinPrecoDia" placeholder="Pre&ccedil;o m&iacute;nimo">
+                    <input type="number" id="precoMaxPrecoDia" placeholder="Pre&ccedil;o m&aacute;ximo">
+                    <select id="ordenacaoPrecoDia">
+                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
+                    </select>
+                </div>
+
+                <div class="resumo" id="resumoPrecoDia"></div>
+                $tabelaPrecoDia
+            </div>
         </section>
     </div>
 
@@ -401,8 +504,10 @@ $html = @"
 
             if (nomeAba === 'Menor Preço') {
                 document.getElementById('statAba').innerHTML = 'Menor Pre&ccedil;o';
-            } else {
+            } else if (nomeAba === 'Planilha de Preços') {
                 document.getElementById('statAba').innerHTML = 'Planilha de Pre&ccedil;os';
+            } else {
+                document.getElementById('statAba').innerHTML = 'Preco do dia';
             }
 
             atualizarStatsGerais();
@@ -652,6 +757,19 @@ $html = @"
             resumoId: 'resumoPrecos'
         });
 
+        configurarFiltros({
+            tabelaId: 'tabelaPrecoDia',
+            buscaId: 'buscaPrecoDia',
+            produtoId: 'produtoPrecoDia',
+            modeloId: 'modeloPrecoDia',
+            gbId: 'gbPrecoDia',
+            condicaoId: 'condicaoPrecoDia',
+            precoMinId: 'precoMinPrecoDia',
+            precoMaxId: 'precoMaxPrecoDia',
+            ordenacaoId: 'ordenacaoPrecoDia',
+            resumoId: 'resumoPrecoDia'
+        });
+
         atualizarStatsGerais();
     </script>
 </body>
@@ -661,4 +779,4 @@ $html = @"
 $destino = Join-Path $docs "index.html"
 [System.IO.File]::WriteAllText($destino, $html, [System.Text.UTF8Encoding]::new($false))
 
-Write-Host "HTML gerado em docs\index.html - dashboard 3.0 corrigido"
+Write-Host "HTML gerado em docs\index.html - dashboard com aba Preco do dia"
