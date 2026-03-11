@@ -260,7 +260,7 @@ function temDefeitoBloqueante(descricao) {
 
     // defeitos gerais comuns
     /\bnao (liga|carrega)\b/,
-    /\bsem (face id|touch id)\b/,
+    /\bsem (face\s*id|touch\s*id)\b/,
     /\bsem sinal\b/,
     /\bsem audio\b/,
     /\bmicrofone (ruim|nao funciona)\b/,
