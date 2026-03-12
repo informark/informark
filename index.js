@@ -3667,9 +3667,9 @@ function extrairItensDeLista(texto) {
           extrairPrecoDaLinhaComMoeda(bufferJunto) ||
           extrairPrecoLinhaVariacao(bufferJunto);
         if (precoVar) {
-          /\b(azul|blue|sky|sky blue|preto|black|branco|white|prata|silver|cinza|gray|grafite|graphite|gold|dourado|verde|green|roxo|purple|vermelho|red|rosa|pink|natural|desert|titanium|titanio|tit[aâ]nio|starlight|midnight|lilás|lilas|laranja|orange)\b/i;
+                    const corVar = bufferJunto.match(/\b(azul|blue|sky|sky blue|preto|black|branco|white|prata|silver|cinza|gray|grafite|graphite|gold|dourado|verde|green|roxo|purple|vermelho|red|rosa|pink|natural|desert|titanium|titanio|tit[aâ]nio|starlight|midnight|lilás|lilas|laranja|orange)\b/i);
           itens.push({
-            produto: ultimoItemBase.produto,
+           produto: ultimoItemBase.produto,
             modelo: ultimoItemBase.modelo,
             armazenamento: ultimoItemBase.armazenamento,
             cor: corVar ? corVar[1] : "",
