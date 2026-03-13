@@ -1509,7 +1509,9 @@ function extrairPrecoFallbackUltimoNumero(texto) {
     }
 
     if (valor === null) continue;
-    if (valor < 400) continue;
+
+    if (valor < 400 && !/\b(airpods|airtag|taramps|hoverboard|controle|ps4|ps5|playstation|xbox|nintendo|switch)\b/i.test(linha)) continue;
+    
 
     // 🔒 BLOQUEIO: iPhone 12+ com preço menor que 1000
     const modeloDetectado = extrairModeloIphoneDefinitivo(texto);
@@ -1530,7 +1532,7 @@ function extrairPrecoFallbackUltimoNumero(texto) {
 
     // ✅ se não tem símbolo de moeda, exige que a linha tenha contexto de item
     const linhaTemContextoItem =
-      /\b(iphone|ipad|macbook|watch|jbl)\b/i.test(linha) ||
+      /\b(iphone|ipad|macbook|watch|jbl|airpods|airtag)\b/i.test(linha) ||
       !!extrairModeloIphoneDefinitivo(linha) ||
       /\b(64|128|256|512)\s*gb\b/i.test(linha) ||
       /\b(pro\s*max|pro|max|plus|mini|xr|xs|16e)\b/i.test(linha) ||
@@ -2671,6 +2673,8 @@ function extrairModelo(texto, produto) {
     const tx2 = (texto || "").toLowerCase();
 
     let m = tx2.match(/\bultra\s*(\d{1,2})?\b/i);
+    // linha NOVA — inserir aqui:
+    if (!m) m = tx2.match(/\baw\s+ultra\s*(\d{1,2})?\b/i);
     const ultra = m ? `ULTRA${m[1] ? " " + m[1] : ""}` : "";
 
     m = tx2.match(/\bse\s*(\d{1,2})\b/i);
@@ -3515,7 +3519,8 @@ function extrairItensDeLista(texto) {
       !ehLinhaProduto &&
       buffer.length === 0 &&
       /\b(lacrados?|novo(s)?|zero|selado(s)?)\b/i.test(low) &&
-      !/\b(bateria\s*nov|tela\s*nov)\b/i.test(low)
+      !/\b(bateria\s*nov|tela\s*nov)\b/i.test(low) &&
+      !/\bsemi\b/i.test(low)
     ) {
       contextoCondicao = "Novo";
       buffer = [];
@@ -3523,6 +3528,9 @@ function extrairItensDeLista(texto) {
     }
 
     if (/^\s*(com\s*nf|c\/nf|nf)\s*$/i.test(low)) continue;
+
+    // Ignora linhas de código de produto
+    if (/\b(c[oó]digo|code|cod\.?)\s*[:=]?\s*\d{3,6}\b/i.test(low)) continue;
 
     // Ignora linhas de parcelamento ("💳 Ou 10x de R$ 669,90")
     if (/^💳/.test(linha) && /\b\d+\s*x\b/i.test(linha)) continue;
