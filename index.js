@@ -3606,7 +3606,7 @@ function extrairItensDeLista(texto) {
 
       if (precoLinha) {
         const pareceNovoItem =
-          /\b(iphone|ipad|macbook|airpods|watch|apple watch|garmin|jbl|samsung|xiaomi|motorola|realme|poco|ps4|ps5|playstation|xbox|nintendo|switch|console|notebook|tv\b|air\s*fr[yi]|geladeira|fogao|micro.ondas)\b/i.test(
+          /\b(iphone|ipad|macbook|airpods|watch|apple           watch|garmin|jbl|samsung|xiaomi|motorola|realme|poco|ps4|ps5|playstation|xbox|nintendo|switch|console|notebook|tv\b|air\s*fr[yi]|geladeira|fogao|micro.ondas|pencil|airtag)\b/i.test(
             linha,
           ) ||
           /\b(ultra|series|se)\b/i.test(linha) ||
