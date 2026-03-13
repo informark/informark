@@ -1675,8 +1675,10 @@ function ehMensagemDeBuscaSemPreco(texto) {
     /(💰|r\$|\$)/i.test(t) ||
     /\b(preco|preço|valor|pix|avista|a vista|à vista|por)\b/i.test(t);
 
-  return temBusca && !temPrecoExplicito;
-}
+    if (temBusca && !temPrecoExplicito) return true;
+    if (temBusca && /\bat[eé]\s*(r?\$|\d)/i.test(t)) return true;
+    return false;
+  }
 
 // =========================
 // 7) EXTRAÇÃO DE PREÇO / PRODUTO / MODELO / ETC.
@@ -3365,7 +3367,10 @@ function extrairItensDeLista(texto) {
       "tecno",
     ];
     for (const p of prefixos) {
-      if (t.startsWith(p + " ") && t.length <= 30) return true;
+      if (t.startsWith(p + " ") && t.length <= 30) {
+        if (p === "apple" && /^apple\s+(watch|pencil|tv|music)\b/i.test(t)) continue;
+        return true;
+      }
     }
     return false;
   }
@@ -3761,6 +3766,11 @@ function extrairItensDeLista(texto) {
       detectado && detectado !== "Outro"
         ? detectado
         : contextoProduto || "Outro";
+
+    if (produto === "Outro" && !contextoProduto) {
+      const inf = inferirIphoneSemPalavra(bloco);
+      if (inf) produto = "iPhone";
+    }
 
     if (
       contextoProduto &&
