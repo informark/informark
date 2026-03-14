@@ -3465,7 +3465,7 @@ function extrairItensDeLista(texto) {
       /\b(ps4|ps5|playstation|xbox|nintendo|switch)\b/i.test(linha) ||
       /\bapple watch\b/i.test(linha) ||
       /\bwatch\b/i.test(linha) ||
-      /\bultra\b/i.test(linha) ||
+      (/\bultra\b/i.test(linha) && !/\bultra\s*wide\b/i.test(linha)) ||
       /\bseries\s*\d{1,2}\b/i.test(linha) ||
       /\bs\d{1,2}\b/i.test(linha) ||
       /\b(3[8-9]|4[0-9])\s*m(?:\s*m)?\b/i.test(linha) ||
