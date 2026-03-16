@@ -106,7 +106,7 @@ function novoPodeEnviarPorPreco({
   const gb = (armazenamento || "").toString().trim().toUpperCase(); // 128GB
   const c = (cor || "").toString().trim().toLowerCase(); // branco
 
-  const key = `${prod}|${m}|${gb}|${c}`;
+  const key = `${prod}|${m}|${gb}`;
   const agora = Date.now();
 
   const last = novosUltimoCache[key];
@@ -138,7 +138,7 @@ function novoMarcarEnviado({
   const gb = (armazenamento || "").toString().trim().toUpperCase();
   const c = (cor || "").toString().trim().toLowerCase();
 
-  const key = `${prod}|${m}|${gb}|${c}`;
+  const key = `${prod}|${m}|${gb}`;
   novosUltimoCache[key] = { ts: Date.now(), preco: Number(novoPreco) };
   salvarNovosUltimo();
 }
@@ -4462,7 +4462,7 @@ client.on("message", async (msg) => {
             }
 
             // ✅ Regra Apple Watch Ultra 3: só envia se preço <= R$5200
-            if (item.produto === "Apple Watch" && /ultra\s*3/i.test(item.modelo) && novoPreco > 5200) {
+            if (item.produto === "Apple Watch" && /ultra/i.test(item.modelo) && novoPreco > 5200) {
               console.log("⛔ Apple Watch Ultra 3 ignorado: preço acima de R$5200:", novoPreco);
               continue;
             }
@@ -4818,7 +4818,7 @@ client.on("message", async (msg) => {
         }
 
         // ✅ Regra Apple Watch Ultra 3: só envia se preço <= R$5200
-        if (produto === "Apple Watch" && /ultra\s*3/i.test(modeloLimpo) && novoPreco > 5200) {
+        if (produto === "Apple Watch" && /ultra/i.test(modeloLimpo) && novoPreco > 5200) {
           console.log("⛔ Apple Watch Ultra 3 ignorado: preço acima de R$5200:", novoPreco);
           return;
         }
