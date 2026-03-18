@@ -457,11 +457,13 @@ function horaRecebidaMsg(msg) {
 function dentroDoHorarioDeEnvio() {
   const agora = new Date();
   const partes = new Intl.DateTimeFormat("pt-BR", {
-    hour: "2-digit", minute: "2-digit", hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
     timeZone: "America/Fortaleza",
   }).formatToParts(agora);
-  const h = parseInt(partes.find(p => p.type === "hour").value);
-  const m = parseInt(partes.find(p => p.type === "minute").value);
+  const h = parseInt(partes.find((p) => p.type === "hour").value);
+  const m = parseInt(partes.find((p) => p.type === "minute").value);
   const minutos = h * 60 + m;
   // Permite envio das 07:50 até 21:59
   return minutos >= 7 * 60 + 50 && minutos < 22 * 60;
@@ -856,7 +858,7 @@ const GRUPOS_MONITORADOS = [
   " Apple Natal",
   "84 APPLE",
   "📱 LISTA - MIXCELL NATAL",
-  "LISTA DE TRANSMISSÃO 📱💻⌚️",
+  "LISTA DE TRANSMISSU�O 📱💻⌚️",
 ];
 
 const CONTATOS_MONITORADOS = ["558487998007", "558491189996", "558488334633"];
@@ -942,7 +944,6 @@ const LIMITES_NOVO_MAX_AVISTA = {
   16: { "128GB": 4400.99, "256GB": 5000.0 },
 
   "17 Pro": { "256GB": 7701.0 },
-
 
   "17 Pro Max": { "256GB": 8701.0 },
 };
@@ -1049,7 +1050,7 @@ function inferirCondicaoPorTabelas({
     return null;
   }
 
-    // Apple Watch Ultra 3: preço > 4500 = Novo
+  // Apple Watch Ultra 3: preço > 4500 = Novo
   if (produto === "Apple Watch") {
     const modeloTxt = (modelo || "").toString().toLowerCase();
     const p = Number(preco);
@@ -1086,7 +1087,7 @@ function inferirCondicaoPorTabelas({
     return "Seminovo";
   }
 
-    if (!textoPuxaSemi) {
+  if (!textoPuxaSemi) {
     // Se tem maxSemi: Novo quando preço >= maxSemi + 200
     if (maxSemi != null && p >= Number(maxSemi) + GAP_NOVO) {
       return "Novo";
@@ -1144,7 +1145,8 @@ function podeEnviarPromo(
 // =========================
 // 6) CSV + VCARD + EXTRAÇÕES
 // =========================
-const CSV_HEADER = "Produto,Modelo,Armazenamento,Cor,Condicao,Preco,Descricao,Data,HoraRecebida,Vendedor,Numero,Grupo\n";
+const CSV_HEADER =
+  "Produto,Modelo,Armazenamento,Cor,Condicao,Preco,Descricao,Data,HoraRecebida,Vendedor,Numero,Grupo\n";
 
 function garantirCSV() {
   if (!fs.existsSync(ARQUIVO_CSV)) {
@@ -1170,7 +1172,9 @@ function verificarResetDiario() {
   if (hoje !== ultimoDiaCSV) {
     resetarCSVDia();
     ultimoDiaCSV = hoje;
-    try { fs.writeFileSync(ARQUIVO_DIA_RESET, hoje); } catch (e) {}
+    try {
+      fs.writeFileSync(ARQUIVO_DIA_RESET, hoje);
+    } catch (e) {}
   }
 }
 
@@ -1287,26 +1291,28 @@ function normalizarNumeroPreco(bruto) {
     .replace(/\$/g, "")
     .replace(/\s+/g, "");
 
-      // corrige formato malformado tipo "8.1.000,00" → 8100 (deveria ser "8.100,00")
+  // corrige formato malformado tipo "8.1.000,00" → 8100 (deveria ser "8.100,00")
   const mMal = s.match(/^(\d+)\.(\d{1,2})\.(\d{3}),(\d{2})$/);
   if (mMal) {
-    const corrigido = parseFloat(mMal[1] + "." + mMal[2]) * 1000 + parseInt(mMal[4]) / 100;
-    if (!isNaN(corrigido) && corrigido >= 50 && corrigido <= 50000) return corrigido;
+    const corrigido =
+      parseFloat(mMal[1] + "." + mMal[2]) * 1000 + parseInt(mMal[4]) / 100;
+    if (!isNaN(corrigido) && corrigido >= 50 && corrigido <= 50000)
+      return corrigido;
   }
 
   // caso BR: 5.150,00
   if (s.includes(",") && s.includes(".")) {
     s = s.replace(/\./g, "").replace(",", ".");
   }
-    // caso BR sem milhar: 2350,00
-    // caso US milhar: 8,899 → 8899
-    else if (s.includes(",")) {
-      if (/^\d{1,3},\d{3}$/.test(s)) {
-        s = s.replace(",", ""); // "8,899" → "8899"
-      } else {
-        s = s.replace(",", ".");
-      }
+  // caso BR sem milhar: 2350,00
+  // caso US milhar: 8,899 → 8899
+  else if (s.includes(",")) {
+    if (/^\d{1,3},\d{3}$/.test(s)) {
+      s = s.replace(",", ""); // "8,899" → "8899"
+    } else {
+      s = s.replace(",", ".");
     }
+  }
   // caso 5.150
   else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
     s = s.replace(/\./g, "");
@@ -1359,6 +1365,15 @@ function extrairPrecoDaLinhaComMoeda(texto) {
 
     if (m) {
       const valor = normalizarNumeroPreco(m[1]);
+      if (valor !== null) {
+        return valor;
+      }
+    }
+
+    // R$ depois do número: ex. "1450R$" ou "1.450 R$"
+    const m2 = linhaLimpa.match(/([\d.,]{2,20})\s*(?:r\$|\$)/i);
+    if (m2) {
+      const valor = normalizarNumeroPreco(m2[1]);
       if (valor !== null) {
         return valor;
       }
@@ -1504,7 +1519,9 @@ function extrairPrecoFallbackUltimoNumero(texto) {
       if (
         /^(19|20)\d{2}$/.test(numeroTexto.trim()) &&
         (linha.slice(0, inicio).trim().endsWith("/") ||
-          /\b(garantia|validade|vencimento|jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b/i.test(linha))
+          /\b(garantia|validade|vencimento|jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b/i.test(
+            linha,
+          ))
       ) {
         continue;
       }
@@ -1518,8 +1535,13 @@ function extrairPrecoFallbackUltimoNumero(texto) {
 
     if (valor === null) continue;
 
-    if (valor < 400 && !/\b(airpods|airtag|taramps|hoverboard|controle|ps4|ps5|playstation|xbox|nintendo|switch)\b/i.test(linha)) continue;
-
+    if (
+      valor < 400 &&
+      !/\b(airpods|airtag|taramps|hoverboard|controle|ps4|ps5|playstation|xbox|nintendo|switch)\b/i.test(
+        linha,
+      )
+    )
+      continue;
 
     // 🔒 BLOQUEIO: iPhone 12+ com preço menor que 1000
     const modeloDetectado = extrairModeloIphoneDefinitivo(texto);
@@ -1573,7 +1595,11 @@ function temContextoForteDePreco(texto) {
 
   // moeda ou palavras de preço
   if (/[💰$]|r\$/i.test(t)) return true;
-  if (/\b(preco|preço|valor|pix|avista|à vista|a vista|por)\b/i.test(t))
+  if (
+    /\b(preco|preço|valor|pix|avista|à vista|a vista|por|promoção|promocao|promo)\b/i.test(
+      t,
+    )
+  )
     return true;
   if (/\bde\b.*\bpor\b/i.test(t)) return true;
 
@@ -1683,10 +1709,10 @@ function ehMensagemDeBuscaSemPreco(texto) {
     /(💰|r\$|\$)/i.test(t) ||
     /\b(preco|preço|valor|pix|avista|a vista|à vista|por)\b/i.test(t);
 
-    if (temBusca && !temPrecoExplicito) return true;
-    if (temBusca && /\bat[eé]\s*(r?\$|\d)/i.test(t)) return true;
-    return false;
-  }
+  if (temBusca && !temPrecoExplicito) return true;
+  if (temBusca && /\bat[eé]\s*(r?\$|\d)/i.test(t)) return true;
+  return false;
+}
 
 // =========================
 // 7) EXTRAÇÃO DE PREÇO / PRODUTO / MODELO / ETC.
@@ -2485,7 +2511,7 @@ function detectarProduto(texto) {
   // aceita 40m, 40mm, 49m, 49mm (mas não quando é Garmin FR com mm)
   if (
     /\b(3[8-9]|4[0-9])\s*m(?:\s*m)?\b/i.test(t) &&
-    !/\b(garmin|forerunner|fr\s*\d)\b/i.test(t)
+    !/\b(garmin|forerunner|fr\s*\d|galaxy|samsung)\b/i.test(t)
   )
     return "Apple Watch";
 
@@ -3376,7 +3402,8 @@ function extrairItensDeLista(texto) {
     ];
     for (const p of prefixos) {
       if (t.startsWith(p + " ") && t.length <= 30) {
-        if (p === "apple" && /^apple\s+(watch|pencil|tv|music)\b/i.test(t)) continue;
+        if (p === "apple" && /^apple\s+(watch|pencil|tv|music)\b/i.test(t))
+          continue;
         return true;
       }
     }
@@ -3561,9 +3588,11 @@ function extrairItensDeLista(texto) {
     // Ignora linhas de garantia/fechamento sem produto ("🛡️ Com garantia | 💰 R$ 2.900")
     if (
       /^🛡/.test(linha) &&
-      !/\b(iphone|ipad|macbook|airpods|watch|jbl|samsung|garmin|xiaomi|motorola)\b/i.test(linha)
-    ) continue;
-
+      !/\b(iphone|ipad|macbook|airpods|watch|jbl|samsung|garmin|xiaomi|motorola)\b/i.test(
+        linha,
+      )
+    )
+      continue;
 
     const cat = detectarCategoriaTitulo(linha);
     if (cat) {
@@ -3734,9 +3763,11 @@ function extrairItensDeLista(texto) {
           extrairPrecoDaLinhaComMoeda(bufferJunto) ||
           extrairPrecoLinhaVariacao(bufferJunto);
         if (precoVar) {
-                    const corVar = bufferJunto.match(/\b(azul|blue|sky|sky blue|preto|black|branco|white|prata|silver|cinza|gray|grafite|graphite|gold|dourado|verde|green|roxo|purple|vermelho|red|rosa|pink|natural|desert|titanium|titanio|tit[aâ]nio|starlight|midnight|lilás|lilas|laranja|orange)\b/i);
+          const corVar = bufferJunto.match(
+            /\b(azul|blue|sky|sky blue|preto|black|branco|white|prata|silver|cinza|gray|grafite|graphite|gold|dourado|verde|green|roxo|purple|vermelho|red|rosa|pink|natural|desert|titanium|titanio|tit[aâ]nio|starlight|midnight|lilás|lilas|laranja|orange)\b/i,
+          );
           itens.push({
-           produto: ultimoItemBase.produto,
+            produto: ultimoItemBase.produto,
             modelo: ultimoItemBase.modelo,
             armazenamento: ultimoItemBase.armazenamento,
             cor: corVar ? corVar[1] : "",
@@ -4213,7 +4244,7 @@ client.on("qr", (qr) => qrcode.generate(qr, { small: true }));
 client.on("ready", async () => {
   console.log("✅ WhatsApp conectado!");
   console.log("🎯 Monitorando grupos:", GRUPOS_MONITORADOS.join(" | "));
-  console.log("🎯 Monitorando CONTATOS (privado):");
+  console.log("mod� Monitorando CONTATOS (privado):");
   console.log("   - " + CONTATOS_MONITORADOS.join("\n   - "));
 
   carregarEnviados();
@@ -4264,17 +4295,21 @@ client.on("ready", async () => {
 
     const agora = new Date();
     const partes = new Intl.DateTimeFormat("pt-BR", {
-      hour: "2-digit", minute: "2-digit", hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
       timeZone: "America/Fortaleza",
     }).formatToParts(agora);
-    const h = parseInt(partes.find(p => p.type === "hour").value);
-    const m = parseInt(partes.find(p => p.type === "minute").value);
+    const h = parseInt(partes.find((p) => p.type === "hour").value);
+    const m = parseInt(partes.find((p) => p.type === "minute").value);
 
     if (h !== 7 || m !== 50) return;
 
     if (!grupoPromoRef) return;
 
-    const diaDoAno = Math.floor((agora - new Date(agora.getFullYear(), 0, 0)) / 86400000);
+    const diaDoAno = Math.floor(
+      (agora - new Date(agora.getFullYear(), 0, 0)) / 86400000,
+    );
     const frase = FRASES_BOM_DIA[diaDoAno % FRASES_BOM_DIA.length];
 
     const msg = `🌅 *Bom dia, time!*\n\n_${frase}_`;
@@ -4456,14 +4491,28 @@ client.on("message", async (msg) => {
             }
 
             // ✅ Regra Apple Watch Ultra 3: só envia se preço <= R$5200
-            if (item.produto === "Apple Watch" && /ultra/i.test(item.modelo) && novoPreco > 5200) {
-              console.log("⛔ Apple Watch Ultra 3 ignorado: preço acima de R$5200:", novoPreco);
+            if (
+              item.produto === "Apple Watch" &&
+              /ultra/i.test(item.modelo) &&
+              novoPreco > 5200
+            ) {
+              console.log(
+                "⛔ Apple Watch Ultra 3 ignorado: preço acima de R$5200:",
+                novoPreco,
+              );
               continue;
             }
 
             // ✅ Regra JBL BOOMBOX 3: só envia se preço <= R$1750
-            if (item.produto === "JBL" && /boombox\s*3/i.test(item.modelo) && novoPreco > 1750) {
-              console.log("⛔ JBL BOOMBOX 3 ignorado: preço acima de R$1750:", novoPreco);
+            if (
+              item.produto === "JBL" &&
+              /boombox\s*3/i.test(item.modelo) &&
+              novoPreco > 1750
+            ) {
+              console.log(
+                "⛔ JBL BOOMBOX 3 ignorado: preço acima de R$1750:",
+                novoPreco,
+              );
               continue;
             }
 
@@ -4812,14 +4861,28 @@ client.on("message", async (msg) => {
         }
 
         // ✅ Regra Apple Watch Ultra 3: só envia se preço <= R$5200
-        if (produto === "Apple Watch" && /ultra/i.test(modeloLimpo) && novoPreco > 5200) {
-          console.log("⛔ Apple Watch Ultra 3 ignorado: preço acima de R$5200:", novoPreco);
+        if (
+          produto === "Apple Watch" &&
+          /ultra/i.test(modeloLimpo) &&
+          novoPreco > 5200
+        ) {
+          console.log(
+            "⛔ Apple Watch Ultra 3 ignorado: preço acima de R$5200:",
+            novoPreco,
+          );
           return;
         }
 
         // ✅ Regra JBL BOOMBOX 3: só envia se preço <= R$1750
-        if (produto === "JBL" && /boombox\s*3/i.test(modeloLimpo) && novoPreco > 1750) {
-          console.log("⛔ JBL BOOMBOX 3 ignorado: preço acima de R$1750:", novoPreco);
+        if (
+          produto === "JBL" &&
+          /boombox\s*3/i.test(modeloLimpo) &&
+          novoPreco > 1750
+        ) {
+          console.log(
+            "⛔ JBL BOOMBOX 3 ignorado: preço acima de R$1750:",
+            novoPreco,
+          );
           return;
         }
 
