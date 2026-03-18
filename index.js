@@ -1,9 +1,3 @@
-// =========================
-// index.js (COMPLETO)
-// Mesma lógica original — ÚNICA mudança: "TELAS" são reconhecidas como "Tela" (não iPhone)
-// =========================
-
-// =========================
 // 1) IMPORTS + CONSTANTES
 // =========================
 const { Client, LocalAuth } = require("whatsapp-web.js");
@@ -100,13 +94,13 @@ function novoPodeEnviarPorPreco({
   if (!["iPhone", "iPad", "Apple Watch"].includes(prod)) return true;
 
   const cond = (condicaoFinal || "").toString().trim().toLowerCase();
-  if (cond !== "novo") return true; // só aplica para NOVO
+  if (!["novo", "seminovo"].includes(cond)) return true;
 
   const m = (modelo || "modelo não informado").toString().trim();
   const gb = (armazenamento || "").toString().trim().toUpperCase(); // 128GB
   const c = (cor || "").toString().trim().toLowerCase(); // branco
 
-  const key = `${prod}|${m}|${gb}`;
+  const key = `${prod}|${m}|${gb}|${cond}`;
   const agora = Date.now();
 
   const last = novosUltimoCache[key];
@@ -132,13 +126,13 @@ function novoMarcarEnviado({
   const prod = (produto || "").toString().trim();
   const cond = (condicaoFinal || "").toString().trim().toLowerCase();
   if (!["iPhone", "iPad", "Apple Watch"].includes(prod)) return;
-  if (cond !== "novo") return;
+  if (!["novo", "seminovo"].includes(cond)) return;
 
   const m = (modelo || "modelo não informado").toString().trim();
   const gb = (armazenamento || "").toString().trim().toUpperCase();
   const c = (cor || "").toString().trim().toLowerCase();
 
-  const key = `${prod}|${m}|${gb}`;
+  const key = `${prod}|${m}|${gb}|${cond}`;
   novosUltimoCache[key] = { ts: Date.now(), preco: Number(novoPreco) };
   salvarNovosUltimo();
 }
@@ -1525,7 +1519,7 @@ function extrairPrecoFallbackUltimoNumero(texto) {
     if (valor === null) continue;
 
     if (valor < 400 && !/\b(airpods|airtag|taramps|hoverboard|controle|ps4|ps5|playstation|xbox|nintendo|switch)\b/i.test(linha)) continue;
-    
+
 
     // 🔒 BLOQUEIO: iPhone 12+ com preço menor que 1000
     const modeloDetectado = extrairModeloIphoneDefinitivo(texto);
@@ -3569,7 +3563,7 @@ function extrairItensDeLista(texto) {
       /^🛡/.test(linha) &&
       !/\b(iphone|ipad|macbook|airpods|watch|jbl|samsung|garmin|xiaomi|motorola)\b/i.test(linha)
     ) continue;
-    
+
 
     const cat = detectarCategoriaTitulo(linha);
     if (cat) {
