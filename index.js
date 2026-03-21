@@ -4616,6 +4616,16 @@ client.on("message", async (msg) => {
               }
             }
 
+            // ✅ Regra iPad 11: só envia se preço <= R$2900
+            if (
+              item.produto === "iPad" &&
+              /\b11\b/.test(item.modelo) &&
+              novoPreco > 2900
+            ) {
+              console.log("⛔ iPad 11 ignorado: preço acima de R$2900:", novoPreco);
+              continue;
+            }
+
             // ✅ SÓ DEPOIS monta a promo
             const mensagemPromo = montarMensagemPromo({
               produto: item.produto,
@@ -4966,6 +4976,16 @@ client.on("message", async (msg) => {
             );
             return;
           }
+        }
+
+        // ✅ Regra iPad 11: só envia se preço <= R$2900
+        if (
+          produto === "iPad" &&
+          /\b11\b/.test(modeloLimpo) &&
+          novoPreco > 2900
+        ) {
+          console.log("⛔ iPad 11 ignorado: preço acima de R$2900:", novoPreco);
+          return;
         }
 
         const mensagemPromo = montarMensagemPromo({
