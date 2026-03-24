@@ -9,6 +9,7 @@ $arquivoRelatorio = Get-ChildItem -Path $origem -Filter "relatorio_menor_preco_*
 
 $arquivoPrecos = Join-Path $origem "precos.csv"
 $arquivoPrecoDia = Join-Path $origem "preco_dia.csv"
+$arquivoPrecoOntem = Join-Path $origem "preco_ontem.csv"
 
 function Nova-TabelaHtml {
     param (
@@ -137,9 +138,17 @@ if (Test-Path $arquivoPrecoDia) {
     $dadosPrecoDia = Import-Csv $arquivoPrecoDia
 }
 
+$dadosPrecoOntem = @()
+if (Test-Path $arquivoPrecoOntem) {
+    $dadosPrecoOntem = Import-Csv $arquivoPrecoOntem
+}
+
 $tabelaRelatorio = Nova-TabelaHtml -Dados $dadosRelatorio -IdTabela "tabelaRelatorio"
 $tabelaPrecos = Nova-TabelaHtml -Dados $dadosPrecos -IdTabela "tabelaPrecos"
 $tabelaPrecoDia = Nova-TabelaHtml -Dados $dadosPrecoDia -IdTabela "tabelaPrecoDia"
+
+$tabelaPrecoOntem = Nova-TabelaHtml -Dados $dadosPrecoOntem -IdTabela "tabelaPrecoOntem"
+$nomeArquivoPrecoOntem = if (Test-Path $arquivoPrecoOntem) { "preco_ontem.csv" } else { "preco_ontem.csv não encontrado" }
 
 $atualizadoEm = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
 $nomeArquivoRelatorio = if ($arquivoRelatorio) { $arquivoRelatorio.Name } else { "Nenhum relatório encontrado" }
@@ -441,8 +450,9 @@ $html = @"
                 <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor Preço')">Menor Pre&ccedil;o</button>
                 <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de Preços')">Planilha de Pre&ccedil;os</button>
                 <button class="tab-btn" onclick="abrirAba('abaPrecoDia', this, 'Preco do dia')">Preco do dia</button>
+            
+            <button class="tab-btn" onclick="abrirAba('abaPrecoOntem', this, 'Preços Ontem')">Pre&ccedil;os Ontem</button>
             </div>
-
             <div id="abaRelatorio" class="tab-content active">
                 <div class="subtitulo">Arquivo base: $nomeArquivoRelatorio</div>
 
@@ -508,6 +518,26 @@ $html = @"
                 <div class="resumo" id="resumoPrecoDia"></div>
                 $tabelaPrecoDia
             </div>
+
+            <div id="abaPrecoOntem" class="tab-content">
+                <div class="subtitulo">Arquivo base: $nomeArquivoPrecoOntem</div>
+                <div class="filtros">
+                    <input type="text" id="buscaPrecoOntem" placeholder="Buscar precos de ontem...">
+                    <select id="produtoPrecoOntem"><option value="">Todos os produtos</option></select>
+                    <select id="modeloPrecoOntem"><option value="">Todos os modelos</option></select>
+                    <select id="gbPrecoOntem"><option value="">Todos os GB</option></select>
+                    <select id="condicaoPrecoOntem"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+                    <input type="number" id="precoMinPrecoOntem" placeholder="Pre&ccedil;o m&iacute;nimo">
+                    <input type="number" id="precoMaxPrecoOntem" placeholder="Pre&ccedil;o m&aacute;ximo">
+                    <select id="ordenacaoPrecoOntem">
+                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
+                    </select>
+                </div>
+                <div class="resumo" id="resumoPrecoOntem"></div>
+                $tabelaPrecoOntem
+            </div>
         </section>
     </div>
 
@@ -532,6 +562,7 @@ $html = @"
                 document.getElementById('statAba').innerHTML = 'Preco do dia';
             }
 
+            
             atualizarStatsGerais();
         }
 
