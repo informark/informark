@@ -94,7 +94,7 @@
 
                 var htmlPaginacao = '';
                 htmlPaginacao += '<button ' + (paginaAtual <= 1 ? 'disabled' : '') + ' data-acao="prev">Anterior</button>';
-                htmlPaginacao += '<span class="info-pagina">Página ' + paginaAtual + ' de ' + totalPaginas + '</span>';
+                htmlPaginacao += '<span class="info-pagina">Pagina ' + paginaAtual + ' de ' + totalPaginas + '</span>';
                 htmlPaginacao += '<button ' + (paginaAtual >= totalPaginas ? 'disabled' : '') + ' data-acao="next">Proxima</button>';
 
                 paginacao.innerHTML = htmlPaginacao;
