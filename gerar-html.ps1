@@ -871,6 +871,19 @@ $html = @"
             resumoId: 'resumoPrecoDia'
         });
 
+        configurarFiltros({
+            tabelaId: 'tabelaPrecoOntem',
+            buscaId: 'buscaPrecoOntem',
+            produtoId: 'produtoPrecoOntem',
+            modeloId: 'modeloPrecoOntem',
+            gbId: 'gbPrecoOntem',
+            condicaoId: 'condicaoPrecoOntem',
+            precoMinId: 'precoMinPrecoOntem',
+            precoMaxId: 'precoMaxPrecoOntem',
+            ordenacaoId: 'ordenacaoPrecoOntem',
+            resumoId: 'resumoPrecoOntem'
+        });
+
         atualizarStatsGerais();
     </script>
 </body>
