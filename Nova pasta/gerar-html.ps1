@@ -3,11 +3,12 @@ $docs = Join-Path $origem "docs"
 
 New-Item -ItemType Directory -Force -Path $docs | Out-Null
 
-$arquivoRelatorio = Get-ChildItem -Path $origem -Filter "relatorio_menor_preco_*.csv" |
+$arquivoRelatorio = Get-ChildItem -Path $origem -Filter "relatorio_menor_preco_*.csv" -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
 
 $arquivoPrecos = Join-Path $origem "precos.csv"
+$arquivoPrecoDia = Join-Path $origem "preco_dia.csv"
 
 function Nova-TabelaHtml {
     param (
@@ -27,17 +28,8 @@ function Nova-TabelaHtml {
         $thead += "<th>$colEscapado</th>`n"
     }
 
-    $tbody = ""
-    foreach ($linha in $Dados) {
-        $tbody += "<tr>`n"
-        foreach ($col in $colunas) {
-            $valor = $linha.$col
-            if ($null -eq $valor) { $valor = "" }
-            $valorEscapado = [System.Net.WebUtility]::HtmlEncode([string]$valor)
-            $tbody += "<td>$valorEscapado</td>`n"
-        }
-        $tbody += "</tr>`n"
-    }
+    $json = $Dados | ConvertTo-Json -Depth 5 -Compress
+    $jsonSeguro = $json -replace '</script>', '<\/script>'
 
     return @"
 <div class="table-wrap">
@@ -47,16 +39,91 @@ function Nova-TabelaHtml {
 $thead
             </tr>
         </thead>
-        <tbody>
-$tbody
-        </tbody>
+        <tbody></tbody>
     </table>
 </div>
+<div class="paginacao" id="${IdTabela}_paginacao"></div>
+<script type="application/json" id="${IdTabela}_data">$jsonSeguro</script>
 "@
+}
+
+function Importar-XlsxComoObjetos {
+    param (
+        [string]$CaminhoArquivo
+    )
+
+    $resultado = @()
+
+    if (-not (Test-Path $CaminhoArquivo)) {
+        return $resultado
+    }
+
+    $excel = $null
+    $workbook = $null
+    $worksheet = $null
+    $usedRange = $null
+
+    try {
+        $excel = New-Object -ComObject Excel.Application
+        $excel.Visible = $false
+        $excel.DisplayAlerts = $false
+
+        $workbook = $excel.Workbooks.Open($CaminhoArquivo)
+        $worksheet = $workbook.Worksheets.Item(1)
+        $usedRange = $worksheet.UsedRange
+
+        $rowCount = $usedRange.Rows.Count
+        $colCount = $usedRange.Columns.Count
+
+        if ($rowCount -lt 2 -or $colCount -lt 1) {
+            return @()
+        }
+
+        $headers = @()
+        for ($col = 1; $col -le $colCount; $col++) {
+            $headerText = [string]$usedRange.Cells.Item(1, $col).Text
+            if ([string]::IsNullOrWhiteSpace($headerText)) {
+                $headerText = "Coluna$col"
+            }
+            $headers += $headerText.Trim()
+        }
+
+        for ($row = 2; $row -le $rowCount; $row++) {
+            $obj = [ordered]@{}
+            $temConteudo = $false
+
+            for ($col = 1; $col -le $colCount; $col++) {
+                $valor = [string]$usedRange.Cells.Item($row, $col).Text
+                if (-not [string]::IsNullOrWhiteSpace($valor)) {
+                    $temConteudo = $true
+                }
+                $obj[$headers[$col - 1]] = $valor
+            }
+
+            if ($temConteudo) {
+                $resultado += [PSCustomObject]$obj
+            }
+        }
+    }
+    finally {
+        if ($workbook) { $workbook.Close($false) | Out-Null }
+        if ($excel) { $excel.Quit() | Out-Null }
+
+        if ($usedRange) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($usedRange) }
+        if ($worksheet) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($worksheet) }
+        if ($workbook) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($workbook) }
+        if ($excel) { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel) }
+
+        [GC]::Collect()
+        [GC]::WaitForPendingFinalizers()
+    }
+
+    return $resultado
 }
 
 $dadosRelatorio = @()
 $dadosPrecos = @()
+$dadosPrecoDia = @()
 
 if ($arquivoRelatorio) {
     $dadosRelatorio = Import-Csv $arquivoRelatorio.FullName
@@ -66,12 +133,18 @@ if (Test-Path $arquivoPrecos) {
     $dadosPrecos = Import-Csv $arquivoPrecos
 }
 
+if (Test-Path $arquivoPrecoDia) {
+    $dadosPrecoDia = Import-Csv $arquivoPrecoDia
+}
+
 $tabelaRelatorio = Nova-TabelaHtml -Dados $dadosRelatorio -IdTabela "tabelaRelatorio"
 $tabelaPrecos = Nova-TabelaHtml -Dados $dadosPrecos -IdTabela "tabelaPrecos"
+$tabelaPrecoDia = Nova-TabelaHtml -Dados $dadosPrecoDia -IdTabela "tabelaPrecoDia"
 
 $atualizadoEm = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
 $nomeArquivoRelatorio = if ($arquivoRelatorio) { $arquivoRelatorio.Name } else { "Nenhum relatório encontrado" }
 $nomeArquivoPrecos = if (Test-Path $arquivoPrecos) { "precos.csv" } else { "precos.csv não encontrado" }
+$nomeArquivoPrecoDia = if (Test-Path $arquivoPrecoDia) { "preco_dia.csv" } else { "preco_dia.csv não encontrado" }
 
 $html = @"
 <!DOCTYPE html>
@@ -260,6 +333,35 @@ $html = @"
             background: #f8fafc;
         }
 
+        .paginacao {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 14px;
+        }
+
+        .paginacao button {
+            border: none;
+            background: #0f172a;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .paginacao button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .paginacao .info-pagina {
+            font-size: 14px;
+            color: #4b5563;
+            font-weight: 600;
+        }
+
         @media (max-width: 1200px) {
             .stats {
                 grid-template-columns: repeat(3, minmax(140px, 1fr));
@@ -338,6 +440,7 @@ $html = @"
             <div class="tabs">
                 <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor Preço')">Menor Pre&ccedil;o</button>
                 <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de Preços')">Planilha de Pre&ccedil;os</button>
+                <button class="tab-btn" onclick="abrirAba('abaPrecoDia', this, 'Preco do dia')">Preco do dia</button>
             </div>
 
             <div id="abaRelatorio" class="tab-content active">
@@ -383,6 +486,28 @@ $html = @"
                 <div class="resumo" id="resumoPrecos"></div>
                 $tabelaPrecos
             </div>
+
+            <div id="abaPrecoDia" class="tab-content">
+                <div class="subtitulo">Arquivo base: $nomeArquivoPrecoDia</div>
+
+                <div class="filtros">
+                    <input type="text" id="buscaPrecoDia" placeholder="Buscar na planilha preco do dia...">
+                    <select id="produtoPrecoDia"><option value="">Todos os produtos</option></select>
+                    <select id="modeloPrecoDia"><option value="">Todos os modelos</option></select>
+                    <select id="gbPrecoDia"><option value="">Todos os GB</option></select>
+                    <select id="condicaoPrecoDia"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+                    <input type="number" id="precoMinPrecoDia" placeholder="Pre&ccedil;o m&iacute;nimo">
+                    <input type="number" id="precoMaxPrecoDia" placeholder="Pre&ccedil;o m&aacute;ximo">
+                    <select id="ordenacaoPrecoDia">
+                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
+                    </select>
+                </div>
+
+                <div class="resumo" id="resumoPrecoDia"></div>
+                $tabelaPrecoDia
+            </div>
         </section>
     </div>
 
@@ -401,8 +526,10 @@ $html = @"
 
             if (nomeAba === 'Menor Preço') {
                 document.getElementById('statAba').innerHTML = 'Menor Pre&ccedil;o';
-            } else {
+            } else if (nomeAba === 'Planilha de Preços') {
                 document.getElementById('statAba').innerHTML = 'Planilha de Pre&ccedil;os';
+            } else {
+                document.getElementById('statAba').innerHTML = 'Preco do dia';
             }
 
             atualizarStatsGerais();
@@ -410,16 +537,18 @@ $html = @"
 
         function detectarIndices(tabelaId) {
             const ths = Array.from(document.querySelectorAll('#' + tabelaId + ' thead th'))
-                .map(th => th.innerText.trim().toLowerCase());
+                .map(function(th) { return th.innerText.trim().toLowerCase(); });
 
             function acharIndiceExatoOuParcial(prioridades) {
-                for (const termo of prioridades) {
-                    const exato = ths.findIndex(nome => nome === termo);
+                for (var i = 0; i < prioridades.length; i++) {
+                    var termo = prioridades[i];
+                    var exato = ths.findIndex(function(nome) { return nome === termo; });
                     if (exato >= 0) return exato;
                 }
 
-                for (const termo of prioridades) {
-                    const parcial = ths.findIndex(nome => nome.includes(termo));
+                for (var j = 0; j < prioridades.length; j++) {
+                    var termo2 = prioridades[j];
+                    var parcial = ths.findIndex(function(nome) { return nome.includes(termo2); });
                     if (parcial >= 0) return parcial;
                 }
 
@@ -436,18 +565,20 @@ $html = @"
         }
 
         function preencherSelectComValores(selectId, valores) {
-            const select = document.getElementById(selectId);
+            var select = document.getElementById(selectId);
             if (!select) return;
 
-            const valorAtual = select.value;
-            const primeiroOption = select.options[0].outerHTML;
+            var valorAtual = select.value;
+            var primeiroOption = select.options[0].outerHTML;
             select.innerHTML = primeiroOption;
 
             valores
-                .filter(v => v && v.trim() !== '')
-                .sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' }))
-                .forEach(valor => {
-                    const option = document.createElement('option');
+                .filter(function(v) { return v && v.trim() !== ''; })
+                .sort(function(a, b) {
+                    return a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' });
+                })
+                .forEach(function(valor) {
+                    var option = document.createElement('option');
                     option.value = valor;
                     option.textContent = valor;
                     select.appendChild(option);
@@ -458,7 +589,7 @@ $html = @"
 
         function extrairNumeroPreco(texto) {
             if (!texto) return NaN;
-            const limpo = texto
+            var limpo = texto
                 .toString()
                 .replace(/R\$/gi, '')
                 .replace(/\s+/g, '')
@@ -474,72 +605,92 @@ $html = @"
         }
 
         function atualizarStatsGerais() {
-            const abaAtiva = document.querySelector('.tab-content.active');
+            var abaAtiva = document.querySelector('.tab-content.active');
             if (!abaAtiva) return;
 
-            const tabela = abaAtiva.querySelector('table');
+            var tabela = abaAtiva.querySelector('table');
             if (!tabela) return;
 
-            const linhasVisiveis = Array.from(tabela.querySelectorAll('tbody tr')).filter(l => l.style.display !== 'none');
+            var linhasVisiveis = Array.from(tabela.querySelectorAll('tbody tr'));
             document.getElementById('statRegistros').textContent = linhasVisiveis.length;
 
-            const ths = Array.from(tabela.querySelectorAll('thead th')).map(th => th.innerText.trim().toLowerCase());
-            const idxModelo = ths.findIndex(t => t === 'modelo' || t.includes('modelo'));
-            const idxPreco = ths.findIndex(t => t === 'preço' || t === 'preco' || t.includes('preço') || t.includes('preco') || t.includes('menorpreco'));
+            var ths = Array.from(tabela.querySelectorAll('thead th')).map(function(th) {
+                return th.innerText.trim().toLowerCase();
+            });
 
-            const modelos = new Set();
-            const precos = [];
+            var idxModelo = ths.findIndex(function(t) {
+                return t === 'modelo' || t.includes('modelo');
+            });
 
-            linhasVisiveis.forEach(linha => {
-                const tds = linha.querySelectorAll('td');
+            var idxPreco = ths.findIndex(function(t) {
+                return t === 'preço' || t === 'preco' || t.includes('preço') || t.includes('preco') || t.includes('menorpreco');
+            });
+
+            var modelos = new Set();
+            var precos = [];
+
+            linhasVisiveis.forEach(function(linha) {
+                var tds = linha.querySelectorAll('td');
                 if (idxModelo >= 0 && tds[idxModelo]) modelos.add(tds[idxModelo].innerText.trim());
                 if (idxPreco >= 0 && tds[idxPreco]) {
-                    const n = extrairNumeroPreco(tds[idxPreco].innerText.trim());
+                    var n = extrairNumeroPreco(tds[idxPreco].innerText.trim());
                     if (!isNaN(n)) precos.push(n);
                 }
             });
 
             document.getElementById('statModelos').textContent = modelos.size;
-            document.getElementById('statMinPreco').textContent = precos.length ? formatarPreco(Math.min(...precos)) : '-';
-            document.getElementById('statMaxPreco').textContent = precos.length ? formatarPreco(Math.max(...precos)) : '-';
+            document.getElementById('statMinPreco').textContent = precos.length ? formatarPreco(Math.min.apply(null, precos)) : '-';
+            document.getElementById('statMaxPreco').textContent = precos.length ? formatarPreco(Math.max.apply(null, precos)) : '-';
         }
 
         function configurarFiltros(config) {
-            const tabela = document.getElementById(config.tabelaId);
+            var tabela = document.getElementById(config.tabelaId);
             if (!tabela) return;
 
-            const tbody = tabela.querySelector('tbody');
-            const busca = document.getElementById(config.buscaId);
-            const produtoSelect = document.getElementById(config.produtoId);
-            const modeloSelect = document.getElementById(config.modeloId);
-            const gbSelect = document.getElementById(config.gbId);
-            const condicaoSelect = document.getElementById(config.condicaoId);
-            const precoMinInput = document.getElementById(config.precoMinId);
-            const precoMaxInput = document.getElementById(config.precoMaxId);
-            const ordenacaoSelect = document.getElementById(config.ordenacaoId);
-            const resumo = document.getElementById(config.resumoId);
+            var tbody = tabela.querySelector('tbody');
+            var busca = document.getElementById(config.buscaId);
+            var produtoSelect = document.getElementById(config.produtoId);
+            var modeloSelect = document.getElementById(config.modeloId);
+            var gbSelect = document.getElementById(config.gbId);
+            var condicaoSelect = document.getElementById(config.condicaoId);
+            var precoMinInput = document.getElementById(config.precoMinId);
+            var precoMaxInput = document.getElementById(config.precoMaxId);
+            var ordenacaoSelect = document.getElementById(config.ordenacaoId);
+            var resumo = document.getElementById(config.resumoId);
+            var paginacao = document.getElementById(config.tabelaId + '_paginacao');
 
-            const indices = detectarIndices(config.tabelaId);
+            var indices = detectarIndices(config.tabelaId);
+            var jsonNode = document.getElementById(config.tabelaId + '_data');
+            var dados = jsonNode ? JSON.parse(jsonNode.textContent) : [];
 
-            function obterLinhas() {
-                return Array.from(tbody.querySelectorAll('tr'));
+            var filtrados = dados.slice();
+            var paginaAtual = 1;
+            var pageSize = 50;
+            var colunas = dados.length ? Object.keys(dados[0]) : [];
+
+            function valorCampo(item, idx) {
+                if (idx < 0 || idx >= colunas.length) return '';
+                var chave = colunas[idx];
+                var valor = item[chave];
+                return (valor == null ? '' : valor).toString().trim();
             }
 
             function popularFiltros() {
-                const linhas = obterLinhas();
+                var produtos = new Set();
+                var modelos = new Set();
+                var gbs = new Set();
+                var condicoes = new Set();
 
-                const produtos = new Set();
-                const modelos = new Set();
-                const gbs = new Set();
-                const condicoes = new Set();
+                dados.forEach(function(item) {
+                    var produto = valorCampo(item, indices.produto);
+                    var modelo = valorCampo(item, indices.modelo);
+                    var gb = valorCampo(item, indices.gb);
+                    var condicao = valorCampo(item, indices.condicao);
 
-                linhas.forEach(linha => {
-                    const tds = linha.querySelectorAll('td');
-
-                    if (indices.produto >= 0 && tds[indices.produto]) produtos.add(tds[indices.produto].innerText.trim());
-                    if (indices.modelo >= 0 && tds[indices.modelo]) modelos.add(tds[indices.modelo].innerText.trim());
-                    if (indices.gb >= 0 && tds[indices.gb]) gbs.add(tds[indices.gb].innerText.trim());
-                    if (indices.condicao >= 0 && tds[indices.condicao]) condicoes.add(tds[indices.condicao].innerText.trim());
+                    if (produto) produtos.add(produto);
+                    if (modelo) modelos.add(modelo);
+                    if (gb) gbs.add(gb);
+                    if (condicao) condicoes.add(condicao);
                 });
 
                 preencherSelectComValores(config.produtoId, Array.from(produtos));
@@ -548,19 +699,16 @@ $html = @"
                 preencherSelectComValores(config.condicaoId, Array.from(condicoes));
             }
 
-            function ordenarLinhas(linhas) {
-                const tipoOrdenacao = ordenacaoSelect?.value || '';
-                if (!tipoOrdenacao || indices.preco < 0) return linhas;
+            function ordenarDados(lista) {
+                var tipoOrdenacao = ordenacaoSelect ? ordenacaoSelect.value : '';
+                if (!tipoOrdenacao || indices.preco < 0) return lista;
 
-                return linhas.sort((a, b) => {
-                    const aTds = a.querySelectorAll('td');
-                    const bTds = b.querySelectorAll('td');
+                return lista.slice().sort(function(a, b) {
+                    var aPreco = extrairNumeroPreco(valorCampo(a, indices.preco));
+                    var bPreco = extrairNumeroPreco(valorCampo(b, indices.preco));
 
-                    const aPreco = aTds[indices.preco] ? extrairNumeroPreco(aTds[indices.preco].innerText) : NaN;
-                    const bPreco = bTds[indices.preco] ? extrairNumeroPreco(bTds[indices.preco].innerText) : NaN;
-
-                    const av = isNaN(aPreco) ? 0 : aPreco;
-                    const bv = isNaN(bPreco) ? 0 : bPreco;
+                    var av = isNaN(aPreco) ? 0 : aPreco;
+                    var bv = isNaN(bPreco) ? 0 : bPreco;
 
                     if (tipoOrdenacao === 'preco-asc') return av - bv;
                     if (tipoOrdenacao === 'preco-desc') return bv - av;
@@ -568,59 +716,117 @@ $html = @"
                 });
             }
 
-            function aplicarFiltros() {
-                let linhas = obterLinhas();
+            function renderTabela() {
+                tbody.innerHTML = '';
 
-                const termo = (busca?.value || '').toLowerCase().trim();
-                const produto = (produtoSelect?.value || '').toLowerCase().trim();
-                const modelo = (modeloSelect?.value || '').toLowerCase().trim();
-                const gb = (gbSelect?.value || '').toLowerCase().trim();
-                const condicao = (condicaoSelect?.value || '').toLowerCase().trim();
-                const precoMin = parseFloat(precoMinInput?.value || '');
-                const precoMax = parseFloat(precoMaxInput?.value || '');
+                var inicio = (paginaAtual - 1) * pageSize;
+                var fim = inicio + pageSize;
+                var pagina = filtrados.slice(inicio, fim);
 
-                let visiveis = 0;
+                var fragment = document.createDocumentFragment();
 
-                linhas.forEach(linha => {
-                    const tds = linha.querySelectorAll('td');
-                    const texto = linha.innerText.toLowerCase();
+                pagina.forEach(function(item) {
+                    var tr = document.createElement('tr');
 
-                    const valorProduto = (indices.produto >= 0 && tds[indices.produto]) ? tds[indices.produto].innerText.toLowerCase().trim() : '';
-                    const valorModelo = (indices.modelo >= 0 && tds[indices.modelo]) ? tds[indices.modelo].innerText.toLowerCase().trim() : '';
-                    const valorGb = (indices.gb >= 0 && tds[indices.gb]) ? tds[indices.gb].innerText.toLowerCase().trim() : '';
-                    const valorCondicao = (indices.condicao >= 0 && tds[indices.condicao]) ? tds[indices.condicao].innerText.toLowerCase().trim() : '';
-                    const valorPreco = (indices.preco >= 0 && tds[indices.preco]) ? extrairNumeroPreco(tds[indices.preco].innerText) : NaN;
+                    colunas.forEach(function(col) {
+                        var td = document.createElement('td');
+                        td.textContent = (item[col] == null ? '' : item[col]).toString();
+                        tr.appendChild(td);
+                    });
 
-                    const okBusca = !termo || texto.includes(termo);
-                    const okProduto = !produto || valorProduto === produto;
-                    const okModelo = !modelo || valorModelo === modelo;
-                    const okGb = !gb || valorGb === gb;
-                    const okCondicao = !condicao || valorCondicao === condicao;
-                    const okPrecoMin = isNaN(precoMin) || (!isNaN(valorPreco) && valorPreco >= precoMin);
-                    const okPrecoMax = isNaN(precoMax) || (!isNaN(valorPreco) && valorPreco <= precoMax);
-
-                    const mostrar = okBusca && okProduto && okModelo && okGb && okCondicao && okPrecoMin && okPrecoMax;
-                    linha.style.display = mostrar ? '' : 'none';
-
-                    if (mostrar) visiveis++;
+                    fragment.appendChild(tr);
                 });
 
-                const linhasOrdenadas = ordenarLinhas(obterLinhas());
-                linhasOrdenadas.forEach(linha => tbody.appendChild(linha));
+                tbody.appendChild(fragment);
+                renderPaginacao();
+                atualizarStatsGerais();
+            }
 
-                if (resumo) {
-                    resumo.textContent = visiveis + ' registro(s) encontrado(s)';
+            function renderPaginacao() {
+                if (!paginacao) return;
+
+                var totalPaginas = Math.max(1, Math.ceil(filtrados.length / pageSize));
+
+                var htmlPaginacao = '';
+                htmlPaginacao += '<button ' + (paginaAtual <= 1 ? 'disabled' : '') + ' data-acao="prev">Anterior</button>';
+                htmlPaginacao += '<span class="info-pagina">Página ' + paginaAtual + ' de ' + totalPaginas + '</span>';
+                htmlPaginacao += '<button ' + (paginaAtual >= totalPaginas ? 'disabled' : '') + ' data-acao="next">Próxima</button>';
+
+                paginacao.innerHTML = htmlPaginacao;
+
+                var prev = paginacao.querySelector('[data-acao="prev"]');
+                var next = paginacao.querySelector('[data-acao="next"]');
+
+                if (prev) {
+                    prev.onclick = function() {
+                        if (paginaAtual > 1) {
+                            paginaAtual--;
+                            renderTabela();
+                        }
+                    };
                 }
 
-                atualizarStatsGerais();
+                if (next) {
+                    next.onclick = function() {
+                        if (paginaAtual < totalPaginas) {
+                            paginaAtual++;
+                            renderTabela();
+                        }
+                    };
+                }
+            }
+
+            function aplicarFiltros() {
+                var termo = (busca ? busca.value : '').toLowerCase().trim();
+                var produto = (produtoSelect ? produtoSelect.value : '').toLowerCase().trim();
+                var modelo = (modeloSelect ? modeloSelect.value : '').toLowerCase().trim();
+                var gb = (gbSelect ? gbSelect.value : '').toLowerCase().trim();
+                var condicao = (condicaoSelect ? condicaoSelect.value : '').toLowerCase().trim();
+                var precoMin = parseFloat(precoMinInput ? precoMinInput.value : '');
+                var precoMax = parseFloat(precoMaxInput ? precoMaxInput.value : '');
+
+                filtrados = dados.filter(function(item) {
+                    var texto = Object.values(item).join(' ').toLowerCase();
+
+                    var valorProduto = valorCampo(item, indices.produto).toLowerCase();
+                    var valorModelo = valorCampo(item, indices.modelo).toLowerCase();
+                    var valorGb = valorCampo(item, indices.gb).toLowerCase();
+                    var valorCondicao = valorCampo(item, indices.condicao).toLowerCase();
+                    var valorPreco = extrairNumeroPreco(valorCampo(item, indices.preco));
+
+                    var okBusca = !termo || texto.includes(termo);
+                    var okProduto = !produto || valorProduto === produto;
+                    var okModelo = !modelo || valorModelo === modelo;
+                    var okGb = !gb || valorGb === gb;
+                    var okCondicao = !condicao || valorCondicao === condicao;
+                    var okPrecoMin = isNaN(precoMin) || (!isNaN(valorPreco) && valorPreco >= precoMin);
+                    var okPrecoMax = isNaN(precoMax) || (!isNaN(valorPreco) && valorPreco <= precoMax);
+
+                    return okBusca && okProduto && okModelo && okGb && okCondicao && okPrecoMin && okPrecoMax;
+                });
+
+                filtrados = ordenarDados(filtrados);
+                paginaAtual = 1;
+
+                if (resumo) {
+                    resumo.textContent = filtrados.length + ' registro(s) encontrado(s)';
+                }
+
+                renderTabela();
+            }
+
+            var debounceTimer;
+            function aplicarFiltrosComDebounce() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(aplicarFiltros, 180);
             }
 
             popularFiltros();
             aplicarFiltros();
 
-            [busca, produtoSelect, modeloSelect, gbSelect, condicaoSelect, precoMinInput, precoMaxInput, ordenacaoSelect].forEach(el => {
+            [busca, produtoSelect, modeloSelect, gbSelect, condicaoSelect, precoMinInput, precoMaxInput, ordenacaoSelect].forEach(function(el) {
                 if (el) {
-                    el.addEventListener('input', aplicarFiltros);
+                    el.addEventListener('input', aplicarFiltrosComDebounce);
                     el.addEventListener('change', aplicarFiltros);
                 }
             });
@@ -652,6 +858,19 @@ $html = @"
             resumoId: 'resumoPrecos'
         });
 
+        configurarFiltros({
+            tabelaId: 'tabelaPrecoDia',
+            buscaId: 'buscaPrecoDia',
+            produtoId: 'produtoPrecoDia',
+            modeloId: 'modeloPrecoDia',
+            gbId: 'gbPrecoDia',
+            condicaoId: 'condicaoPrecoDia',
+            precoMinId: 'precoMinPrecoDia',
+            precoMaxId: 'precoMaxPrecoDia',
+            ordenacaoId: 'ordenacaoPrecoDia',
+            resumoId: 'resumoPrecoDia'
+        });
+
         atualizarStatsGerais();
     </script>
 </body>
@@ -661,4 +880,4 @@ $html = @"
 $destino = Join-Path $docs "index.html"
 [System.IO.File]::WriteAllText($destino, $html, [System.Text.UTF8Encoding]::new($false))
 
-Write-Host "HTML gerado em docs\index.html - dashboard 3.0 corrigido"
+Write-Host "HTML gerado em docs\index.html - dashboard com aba Preco do dia"

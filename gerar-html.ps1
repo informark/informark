@@ -9,7 +9,7 @@ $arquivoRelatorio = Get-ChildItem -Path $origem -Filter "relatorio_menor_preco_*
 
 $arquivoPrecos = Join-Path $origem "precos.csv"
 $arquivoPrecoDia = Join-Path $origem "preco_dia.csv"
-
+$arquivoPrecoOntem = Join-Path $origem "preco_ontem.csv"
 function Nova-TabelaHtml {
     param (
         [array]$Dados,
@@ -137,14 +137,21 @@ if (Test-Path $arquivoPrecoDia) {
     $dadosPrecoDia = Import-Csv $arquivoPrecoDia
 }
 
+$dadosPrecoOntem = @()
+if (Test-Path $arquivoPrecoOntem) {
+    $dadosPrecoOntem = Import-Csv $arquivoPrecoOntem
+}
+
 $tabelaRelatorio = Nova-TabelaHtml -Dados $dadosRelatorio -IdTabela "tabelaRelatorio"
 $tabelaPrecos = Nova-TabelaHtml -Dados $dadosPrecos -IdTabela "tabelaPrecos"
 $tabelaPrecoDia = Nova-TabelaHtml -Dados $dadosPrecoDia -IdTabela "tabelaPrecoDia"
+$tabelaPrecoOntem = Nova-TabelaHtml -Dados $dadosPrecoOntem -IdTabela "tabelaPrecoOntem"
 
 $atualizadoEm = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
 $nomeArquivoRelatorio = if ($arquivoRelatorio) { $arquivoRelatorio.Name } else { "Nenhum relatório encontrado" }
 $nomeArquivoPrecos = if (Test-Path $arquivoPrecos) { "precos.csv" } else { "precos.csv não encontrado" }
 $nomeArquivoPrecoDia = if (Test-Path $arquivoPrecoDia) { "preco_dia.csv" } else { "preco_dia.csv não encontrado" }
+$nomeArquivoPrecoOntem = if (Test-Path $arquivoPrecoOntem) { "preco_ontem.csv" } else { "preco_ontem.csv não encontrado" }
 
 $html = @"
 <!DOCTYPE html>
@@ -440,8 +447,9 @@ $html = @"
             <div class="tabs">
                 <button class="tab-btn active" onclick="abrirAba('abaRelatorio', this, 'Menor Preço')">Menor Pre&ccedil;o</button>
                 <button class="tab-btn" onclick="abrirAba('abaPrecos', this, 'Planilha de Preços')">Planilha de Pre&ccedil;os</button>
-                <button class="tab-btn" onclick="abrirAba('abaPrecoDia', this, 'Preco do dia')">Preco do dia</button>
-            </div>
+                <button class="tab-btn" onclick="abrirAba('abaPrecoDia', this, 'Preço do dia')">Preco do dia</button>
+                <button class="tab-btn" onclick="abrirAba('abaPrecoOntem', this, 'Precos de ontem')">Pre&ccedil;os de ontem</button>
+                </div>
 
             <div id="abaRelatorio" class="tab-content active">
                 <div class="subtitulo">Arquivo base: $nomeArquivoRelatorio</div>
@@ -487,27 +495,49 @@ $html = @"
                 $tabelaPrecos
             </div>
 
-            <div id="abaPrecoDia" class="tab-content">
-                <div class="subtitulo">Arquivo base: $nomeArquivoPrecoDia</div>
+<div id="abaPrecoDia" class="tab-content">
+    <div class="subtitulo">Arquivo base: $nomeArquivoPrecoDia</div>
 
-                <div class="filtros">
-                    <input type="text" id="buscaPrecoDia" placeholder="Buscar na planilha preco do dia...">
-                    <select id="produtoPrecoDia"><option value="">Todos os produtos</option></select>
-                    <select id="modeloPrecoDia"><option value="">Todos os modelos</option></select>
-                    <select id="gbPrecoDia"><option value="">Todos os GB</option></select>
-                    <select id="condicaoPrecoDia"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
-                    <input type="number" id="precoMinPrecoDia" placeholder="Pre&ccedil;o m&iacute;nimo">
-                    <input type="number" id="precoMaxPrecoDia" placeholder="Pre&ccedil;o m&aacute;ximo">
-                    <select id="ordenacaoPrecoDia">
-                        <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
-                        <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
-                        <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
-                    </select>
-                </div>
+    <div class="filtros">
+        <input type="text" id="buscaPrecoDia" placeholder="Buscar na planilha preco do dia...">
+        <select id="produtoPrecoDia"><option value="">Todos os produtos</option></select>
+        <select id="modeloPrecoDia"><option value="">Todos os modelos</option></select>
+        <select id="gbPrecoDia"><option value="">Todos os GB</option></select>
+        <select id="condicaoPrecoDia"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+        <input type="number" id="precoMinPrecoDia" placeholder="Pre&ccedil;o m&iacute;nimo">
+        <input type="number" id="precoMaxPrecoDia" placeholder="Pre&ccedil;o m&aacute;ximo">
+        <select id="ordenacaoPrecoDia">
+            <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+            <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+            <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
+        </select>
+    </div>
 
-                <div class="resumo" id="resumoPrecoDia"></div>
-                $tabelaPrecoDia
-            </div>
+    <div class="resumo" id="resumoPrecoDia"></div>
+    $tabelaPrecoDia
+</div>
+
+<div id="abaPrecoOntem" class="tab-content">
+    <div class="subtitulo">Arquivo base: $nomeArquivoPrecoOntem</div>
+
+    <div class="filtros">
+        <input type="text" id="buscaPrecoOntem" placeholder="Buscar em pre&ccedil;os de ontem...">
+        <select id="produtoPrecoOntem"><option value="">Todos os produtos</option></select>
+        <select id="modeloPrecoOntem"><option value="">Todos os modelos</option></select>
+        <select id="gbPrecoOntem"><option value="">Todos os GB</option></select>
+        <select id="condicaoPrecoOntem"><option value="">Todas as condi&ccedil;&otilde;es</option></select>
+        <input type="number" id="precoMinPrecoOntem" placeholder="Pre&ccedil;o m&iacute;nimo">
+        <input type="number" id="precoMaxPrecoOntem" placeholder="Pre&ccedil;o m&aacute;ximo">
+        <select id="ordenacaoPrecoOntem">
+            <option value="">Ordena&ccedil;&atilde;o padr&atilde;o</option>
+            <option value="preco-asc">Pre&ccedil;o: menor para maior</option>
+            <option value="preco-desc">Pre&ccedil;o: maior para menor</option>
+        </select>
+    </div>
+
+    <div class="resumo" id="resumoPrecoOntem"></div>
+    $tabelaPrecoOntem
+</div>
         </section>
     </div>
 
@@ -869,6 +899,19 @@ $html = @"
             precoMaxId: 'precoMaxPrecoDia',
             ordenacaoId: 'ordenacaoPrecoDia',
             resumoId: 'resumoPrecoDia'
+        });
+
+        configurarFiltros({
+            tabelaId: 'tabelaPrecoOntem',
+            buscaId: 'buscaPrecoOntem',
+            produtoId: 'produtoPrecoOntem',
+            modeloId: 'modeloPrecoOntem',
+            gbId: 'gbPrecoOntem',
+            condicaoId: 'condicaoPrecoOntem',
+            precoMinId: 'precoMinPrecoOntem',
+            precoMaxId: 'precoMaxPrecoOntem',
+            ordenacaoId: 'ordenacaoPrecoOntem',
+            resumoId: 'resumoPrecoOntem'
         });
 
         atualizarStatsGerais();
