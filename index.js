@@ -2623,6 +2623,14 @@ function detectarProduto(texto) {
   )
     return "JBL";
 
+  // iPhone escrito sem "iPhone" mas com geração + GB + sinal de bateria
+  if (
+    /\b(8|11|12|13|14|15|16|17)\b/.test(t) &&
+    /\b(64|128|256|512)\s*(gb)?\b/i.test(t) &&
+    /🔋|\bbateria\b|\bsaude\b|\bbattery\b/i.test(t) &&
+    !/\b(samsung|galaxy|xiaomi|redmi|motorola|realme|poco|lenovo)\b/i.test(t)
+  ) return "iPhone";
+
   const temAcessorio =
     /\b(fonte|carregador|cabo|pelicula|película|capinha|case|adaptador|airtag|earpods|fone|pencil)\b/i.test(
       t,
