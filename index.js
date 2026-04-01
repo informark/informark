@@ -433,11 +433,12 @@ function extrairCorDaDescricao(texto) {
     "titanium",
     "titanio",
     "titânio",
+    "orange",
   ];
 
   for (const c of cores) {
     const re = new RegExp(`(^|[|/\\-\\s])${c}([\\s|/\\-]|$)`, "i");
-    if (re.test(t)) return c;
+    if (re.test(t)) return c === "orange" ? "laranja" : c;
   }
 
   return "";
