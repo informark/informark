@@ -2399,10 +2399,9 @@ function detectarCondicaoPorProduto(texto, produto) {
     .replace(/[\u200B-\u200F\u202A-\u202E\u2060\uFE0E\uFE0F]/g, " ") // zero-width
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // tira acentos
     .replace(/\s+/g, " ")
+    .replace(/_/g, " ")
     .trim();
-    .replace(/_/g, " ");   // ← adiciona esta linha
 
   // ✅ 1) SEMINOVO primeiro (evita "semi novo" cair em "novo")
   if (/(semi\W*nov[oa]|seminov[oa]|usado|vitrine|revisado)/i.test(t))
