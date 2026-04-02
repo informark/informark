@@ -1362,7 +1362,9 @@ function normalizarNumeroPreco(bruto) {
 
 function extrairPrecoLinhaVariacao(linha) {
   if (!linha) return null;
-
+  // ignora linhas de garantia/validade com datas
+  if (/\bgarantia\b|\bvalidade\b|\bvencimento\b/i.test(linha)) return null;
+  if (/\b\d{1,2}\/(19|20)\d{2}\b/.test(linha)) return null;  // ← MM/AAAA
   const matches = [
     ...linha.matchAll(
       /\b(\d{1,3}(?:\.\d{3})+(?:,\d{2})?|\d{3,5}(?:[.,]\d{2})?)\b/g,
@@ -3621,7 +3623,7 @@ function extrairItensDeLista(texto) {
     if (
       !extrairPreco(linha) &&
       !ehLinhaProduto &&
-      /\b(seminovos?|usado(s)?|vitrine)\b/i.test(low)
+      /\b(seminovos?|semi\s*[-–]?\s*novos?|usado(s)?|vitrine)\b/i.test(low)
     ) {
       contextoCondicao = "Seminovo";
       buffer = [];
