@@ -3784,7 +3784,7 @@ function extrairItensDeLista(texto) {
           bufferJunto,
         );
       const semModeloNum =
-        !/\b(1[0-7]|se)\s*(pro\s*max|promax|pro|max|plus|mini|air)?\s*(64|128|256|512)\s*g/i.test(
+        !/\b(1[0-7]|se)\s*(pro\s*max|promax|pro|max|plus|mini|air)?[\s\-–]*(64|128|256|512)\s*g/i.test(
           bufferJunto,
         );
       const temSufixoDiferente =
