@@ -1502,7 +1502,7 @@ function extrairPrecoFallbackUltimoNumero(texto) {
     const linha = linhas[i];
 
     // ignora linha de bateria/saúde
-    if (/🔋|bateria|saude|saúde|%\b/i.test(linha)) continue;
+    if (/🔋|bateria|saude|saúde|%|ciclos?/i.test(linha)) continue;
 
     // ignora telefone
     const soDigitos = linha.replace(/\D/g, "");
@@ -2648,7 +2648,7 @@ function detectarProduto(texto) {
   if (
     /\b(8|11|12|13|14|15|16|17)\b/.test(t) &&
     /\b(64|128|256|512)\s*(gb)?\b/i.test(t) &&
-    /🔋|\bbateria\b|\bsaude\b|\bbattery\b/i.test(t) &&
+    (/🔋|\bbateria\b|\bsaude\b|\bbattery\b/i.test(t) || /\b(pro\s*max|promax|pro|plus|mini)\b/i.test(t)) &&
     !/\b(samsung|galaxy|xiaomi|redmi|motorola|realme|poco|lenovo)\b/i.test(t)
   )
     return "iPhone";
