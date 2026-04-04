@@ -3953,6 +3953,9 @@ function extrairItensDeLista(texto) {
     let armazenamento = detectarArmazenamento(bloco);
     let modelo = extrairModelo(bloco, produto);
 
+    // DEBUG TEMPORÁRIO
+    if (produto === "iPhone") console.log(`DEBUG modelo: "${modelo}" | bloco="${bloco.slice(0,80)}"`);
+
     // ✅ MacBook: pega RAM/SSD do texto e joga SSD no campo "armazenamento"
     if (produto === "MacBook") {
       const { ram, ssd } = extrairConfigMacBook(bloco);
